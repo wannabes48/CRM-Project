@@ -6,9 +6,13 @@ from rest_framework.response import Response
 from django.db import transaction
 
 from .models import Tenant, CustomUser, Contact, Deal, Ticket
-from .serializers import ContactSerializer, DealSerializer, TicketSerializer
+from .serializers import ContactSerializer, DealSerializer, TicketSerializer, EventSerializer, TicketNoteSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+from rest_framework import generics
+from django.contrib.auth import update_session_auth_hash
+from .serializers import UserProfileSerializer, TenantSettingsSerializer
 
 # --- Explicit, Secure ViewSets ---
 class ContactViewSet(viewsets.ModelViewSet):
@@ -16,21 +20,60 @@ class ContactViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Contact.objects.filter(tenant=self.request.user.tenant).order_by('-created_at')
+        user = self.request.user
+        tenant = user.tenant
+        qs = Contact.objects.filter(tenant=tenant).count()
+
+        if user.role == 'Sales Rep':
+            qs = qs.filter(assigned_to=user)
+        return qs.order_by('-created_at')
+        
+        # --- THE DETECTIVE WORK ---
+        print(f"🕵️ WHO IS ASKING? User: {user.username} | Workspace: {tenant.name} | Contacts Found: {count}")
+    
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant, assigned_to=self.request.user)
 
 class DealViewSet(viewsets.ModelViewSet):
     serializer_class = DealSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Deal.objects.filter(tenant=self.request.user.tenant).order_by('-created_at')
+        user = self.request.user
+        qs = Deal.objects.filter(tenant=user.tenant)
+        # RBAC: Sales Reps only see their own deals
+        if user.role == 'Sales Rep':
+            qs = qs.filter(assigned_to=user)
+        return qs.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant, assigned_to=self.request.user)
 
 class TicketViewSet(viewsets.ModelViewSet):
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Ticket.objects.filter(tenant=self.request.user.tenant).order_by('-created_at')
+        user = self.request.user
+        qs = Ticket.objects.filter(tenant=user.tenant)
+        # RBAC: Sales Reps only see their own tickets
+        if user.role == 'Sales Rep':
+            qs = qs.filter(assigned_to=user)
+        return qs.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant, assigned_to=self.request.user)
+
+class TicketNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = TicketNoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return TicketNote.objects.filter(tenant=user.tenant).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant, author=self.request.user)
 
 # --- Custom Auth & JWT Views ---
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -140,3 +183,44 @@ def global_search(request):
         'deals': [{'id': str(d.id), 'name': d.title, 'desc': f"${d.amount} • {d.stage}"} for d in deals],
         'tickets': [{'id': str(t.id), 'name': t.subject, 'desc': f"{t.status} • {t.priority}"} for t in tickets],
     })
+
+class EventViewSet(viewsets.ModelViewSet):
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Event.objects.filter(tenant=self.request.user.tenant)
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant, assigned_to=self.request.user)
+
+# --- User & Workspace Settings Endpoints ---
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user # Always return the currently logged-in user
+
+class TenantSettingsView(generics.RetrieveUpdateAPIView):
+    serializer_class = TenantSettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.tenant # Always return the user's specific workspace
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+
+    if not user.check_password(old_password):
+        return Response({'error': 'Incorrect current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    update_session_auth_hash(request, user) # Prevents the user from being logged out after password change
+    
+    return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)

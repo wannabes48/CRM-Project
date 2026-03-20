@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MoreHorizontal, Plus, Calendar } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import api from '../contexts/AuthContext';
+import NewDealModal from '../components/modals/NewDealModal';
 
 type Stage = 'Lead' | 'Qualified' | 'Proposal' | 'Won' | 'Lost';
 
@@ -26,11 +27,11 @@ const STAGES: { name: Stage; color: string }[] = [
 export default function PipelinePage() {
   const { theme } = useTheme();
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
 
   // Fetch Deals from Django
-  useEffect(() => {
     const fetchDeals = async () => {
       try {
         const response = await api.get('deals/');
@@ -42,8 +43,6 @@ export default function PipelinePage() {
       }
     };
     fetchDeals();
-  }, []);
-
   // --- Drag and Drop Handlers ---
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedDealId(id);
@@ -93,7 +92,7 @@ export default function PipelinePage() {
           <h1 className="text-3xl font-black tracking-tight text-black dark:text-white">Sales Pipeline</h1>
           <p className="text-gray-500 text-sm mt-1">Drag and drop deals to update their stages in the database.</p>
         </div>
-        <button className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)]">
+        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)]">
           <Plus size={18} strokeWidth={3} /> New Deal
         </button>
       </header>
@@ -165,6 +164,11 @@ export default function PipelinePage() {
           })}
         </div>
       </div>
+      <NewDealModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchDeals} 
+      />
     </div>
   );
 }

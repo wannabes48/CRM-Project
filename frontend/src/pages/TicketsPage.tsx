@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MoreHorizontal, Ticket as TicketIcon, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import api from '../contexts/AuthContext';
+import TicketDetailModal from '../components/modals/TicketDetailModal';
+import NewTicketModal from '../components/modals/NewTicketModal'; // <-- Add this import
 
 interface Ticket {
   id: string;
@@ -14,21 +16,24 @@ interface Ticket {
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+
+  const fetchTickets = async () => {
+    try {
+      const response = await api.get('tickets/');
+      const actualData = response.data.results ? response.data.results : response.data;
+      
+      console.log("Fetched Data:", actualData);
+      setTickets(actualData);
+    } catch (error) {
+      console.error("Error fetching tickets:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        const response = await api.get('tickets/');
-        const actualData = response.data.results ? response.data.results : response.data;
-        
-        console.log("Fetched Data:", actualData);
-        setTickets(actualData);
-      } catch (error) {
-        console.error("Error fetching tickets:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTickets();
   }, []);
 
@@ -76,7 +81,7 @@ export default function TicketsPage() {
               className="w-full bg-white dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-xl py-2 pl-10 pr-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white transition-colors"
             />
           </div>
-          <button className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)] shrink-0">
+          <button onClick={() => setIsNewModalOpen(true)} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)] shrink-0">
             <Plus size={18} strokeWidth={3} /> New Ticket
           </button>
         </div>
@@ -99,7 +104,7 @@ export default function TicketsPage() {
               {tickets.map((ticket) => {
                 const statusConfig = getStatusConfig(ticket.status);
                 return (
-                  <tr key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-saas-surfacehover/50 transition-colors group">
+                  <tr key={ticket.id} onClick={() => setSelectedTicket(ticket)} className="hover:bg-gray-50 dark:hover:bg-saas-surfacehover/50 transition-colors group">
                     <td className="p-4 pl-6 max-w-md">
                       <p className="font-bold text-black dark:text-white truncate">{ticket.subject}</p>
                       <p className="text-xs text-gray-500 truncate mt-1">{ticket.description}</p>
@@ -136,6 +141,19 @@ export default function TicketsPage() {
           </table>
         </div>
       </div>
+      <TicketDetailModal
+        isOpen={!!selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+        ticket={selectedTicket}
+        onUpdate={() => {}}
+      />
+
+      {/* <-- Add the New Ticket Modal here */}
+      <NewTicketModal
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
+        onSuccess={fetchTickets}
+      />
     </div>
   );
 }

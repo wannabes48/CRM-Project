@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Moon, Sun, Bell, Globe, Search, Menu, LayoutDashboard, Users, Briefcase, Ticket as TicketIcon, Phone, Settings, HelpCircle, Handshake, CalendarIcon, BarChart3, LogOut } from 'lucide-react';
+import { Moon, Sun, Bell, Globe, Search, Menu, LayoutDashboard, Users, Briefcase, Ticket as TicketIcon, Phone, Settings, HelpCircle, CalendarIcon, BarChart3, LogOut } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../contexts/AuthContext';
@@ -150,7 +150,6 @@ export default function DashboardLayout() {
           <NavItem to="/tickets" icon={<TicketIcon size={20} />} label="Support" isOpen={isLeftSidebarOpen} />
           <NavItem to="/calendar" icon={<CalendarIcon size={20} />} label="Calendar" isOpen={isLeftSidebarOpen} />
           <NavItem to="/reports" icon={<BarChart3 size={20} />} label="Reports" isOpen={isLeftSidebarOpen} />
-          <NavItem to="/deals" icon={<Handshake size={20} />} label="Deals" isOpen={isLeftSidebarOpen} />
         </nav>
 
         <div className="mt-auto w-full">

@@ -7,13 +7,16 @@ from rest_framework_simplejwt.views import (
 )
 from core.views import (
     register_tenant, dashboard_summary, CustomTokenObtainPairView,
-    ContactViewSet, DealViewSet, TicketViewSet, global_search
+    ContactViewSet, DealViewSet, TicketViewSet, global_search, EventViewSet,
+    UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet
 )
 
 router = DefaultRouter()
 router.register(r'contacts', ContactViewSet, basename='contact')
 router.register(r'deals', DealViewSet, basename='deal')
 router.register(r'tickets', TicketViewSet, basename='ticket')
+router.register(r'events', EventViewSet, basename='event')
+router.register(r'ticket-notes', TicketNoteViewSet, basename='ticket-note')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +28,7 @@ urlpatterns = [
     path('api/dashboard/', dashboard_summary, name='dashboard_summary'),
     path('api/search/', global_search, name='global_search'),
     path('api/', include(router.urls)),
+    path('api/users/me/', UserProfileView.as_view(), name='user_profile'),
+    path('api/tenant/', TenantSettingsView.as_view(), name='tenant_settings'),
+    path('api/users/change-password/', change_password, name='change_password'),
 ]

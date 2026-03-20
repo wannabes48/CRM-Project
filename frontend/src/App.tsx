@@ -6,7 +6,9 @@ import DashboardPage from './pages/DashboardPage';
 import PipelinePage from './pages/PipelinePage';
 import ContactsPage from './pages/ContactsPage';
 import TicketsPage from './pages/TicketsPage';
-import DealsPage from './pages/DealsPage';
+import CalendarPage from './pages/CalendarPage';
+import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Import your pages (You can move these to a separate src/pages folder later)
 import LoginPage from './pages/LoginPage';
@@ -28,7 +30,9 @@ export default function App() {
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/pipeline" element={<PipelinePage />} />
               <Route path="/tickets" element={<TicketsPage />} />
-              <Route path="/deals" element={<DealsPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
           

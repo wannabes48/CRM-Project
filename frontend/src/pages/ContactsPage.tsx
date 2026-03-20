@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, MoreHorizontal, Mail, Phone, Building } from 'lucide-react';
+import NewContactModal from '../components/modals/NewContactModal';
 import api from '../contexts/AuthContext';
 
 interface Contact {
@@ -14,24 +15,23 @@ interface Contact {
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const response = await api.get('contacts/');
-        const actualData = response.data.results ? response.data.results : response.data;
+  const fetchContacts = async () => {
+    try {
+      const response = await api.get('contacts/');
+      const actualData = response.data.results ? response.data.results : response.data;
 
-        console.log("Fetched Data:", actualData);
-        setContacts(actualData);
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchContacts();
-  }, []);
+      console.log("Fetched Data:", actualData);
+      setContacts(actualData);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchContacts();
 
   if (loading) {
     return (
@@ -58,7 +58,7 @@ export default function ContactsPage() {
               className="w-full bg-white dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-xl py-2 pl-10 pr-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white transition-colors"
             />
           </div>
-          <button className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)] shrink-0">
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)] shrink-0">
             <Plus size={18} strokeWidth={3} /> Add
           </button>
         </div>
@@ -120,6 +120,12 @@ export default function ContactsPage() {
           </table>
         </div>
       </div>
+      
+      <NewContactModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchContacts} 
+      />
     </div>
   );
 }

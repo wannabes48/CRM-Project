@@ -8,6 +8,8 @@ class Tenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    domain = models.CharField(max_length=255, blank=True, null=True)
+    industry = models.CharField(max_length=100, default='Technology')
     stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
     plan_name = models.CharField(max_length=100, default='free')
     subscription_status = models.CharField(
@@ -179,6 +181,7 @@ class TicketNote(TenantAwareModel):
     author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     body = models.TextField()
     is_internal = models.BooleanField(default=True)
+    is_customer_facing = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -187,3 +190,16 @@ class TicketNote(TenantAwareModel):
     def __str__(self):
         tag = "Internal" if self.is_internal else "Reply"
         return f"[{tag}] {self.body[:50]}"
+
+class Event(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    category = models.CharField(max_length=50, default='Meeting') # Meeting, Call, Deadline
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __cl__(self):
+        return self.title

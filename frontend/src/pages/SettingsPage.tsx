@@ -1,83 +1,306 @@
-import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, CreditCard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun } from 'lucide-react';
+import api from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+
+type Tab = 'profile' | 'workspace' | 'security' | 'notifications';
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
 
-  const handleLogout = async () => {
-    await logout();
+  // Form States
+  const [profile, setProfile] = useState({first_name: '', last_name: '', email: '', role: ''});
+
+  const [workspace, setWorkspace] = useState({name: '', domain: '', industry: 'Technology'});
+  const [passwords, setPasswords] = useState({ old_password: '', new_password: '', confirm_password: '' });
+
+  // Fetch Live Data on Mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const [userRes, tenantRes] = await Promise.all([
+          api.get('users/me/'),
+          api.get('tenant/')
+        ]);
+        setProfile(userRes.data);
+        setWorkspace(tenantRes.data);
+      } catch (error) {
+        console.error("Failed to load settings data", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Save Profile or Workspace
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setMessage({ type: '', text: '' });
+    
+    try {
+      if (activeTab === 'profile') {
+        await api.patch('users/me/', profile);
+      } else if (activeTab === 'workspace') {
+        await api.patch('tenant/', workspace);
+      }
+      setMessage({ type: 'success', text: 'Settings saved successfully!' });
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to save changes.' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    }
   };
 
+  // Save Password
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwords.new_password !== passwords.confirm_password) {
+      return setMessage({ type: 'error', text: 'New passwords do not match.' });
+    }
+
+    setIsSaving(true);
+    setMessage({ type: '', text: '' });
+    
+    try {
+      await api.post('users/change-password/', passwords);
+      setMessage({ type: 'success', text: 'Password updated securely.' });
+      setPasswords({ old_password: '', new_password: '', confirm_password: '' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to update password.' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
+  const tabs = [
+    { id: 'profile', label: 'My Profile', icon: <User size={18} /> },
+    { id: 'workspace', label: 'Workspace', icon: <Building size={18} /> },
+    { id: 'security', label: 'Security', icon: <Lock size={18} /> },
+    { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
+  ];
+
   return (
-    <div>
-      <h1 className="text-4xl font-black tracking-tight mb-8">Settings</h1>
+    <div className="h-full flex flex-col animate-in fade-in duration-500">
+      <header className="mb-8">
+        <h1 className="text-3xl font-black tracking-tight text-black dark:text-white">Settings</h1>
+        <p className="text-gray-500 text-sm mt-1">Manage your account preferences and workspace details.</p>
 
-      {/* Profile */}
-      <section className="border-2 border-black p-6 mb-6">
-        <h2 className="font-black text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-          <User size={16} /> Profile
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-xs font-bold uppercase text-gray-500">Username</span>
-            <p className="font-semibold mt-1">{user?.username}</p>
-          </div>
-          <div>
-            <span className="text-xs font-bold uppercase text-gray-500">Email</span>
-            <p className="font-semibold mt-1">{user?.email}</p>
-          </div>
-          <div>
-            <span className="text-xs font-bold uppercase text-gray-500">Role</span>
-            <p className="font-semibold mt-1">
-              <span className="inline-block px-2 py-0.5 bg-black text-white text-xs font-bold uppercase">
-                {user?.role}
-              </span>
-            </p>
-          </div>
-          <div>
-            <span className="text-xs font-bold uppercase text-gray-500">Workspace</span>
-            <p className="font-semibold mt-1">{user?.tenant_name}</p>
-          </div>
+        {/* APPEARANCE TOGGLE */}
+        <button 
+          onClick={toggleTheme}
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm text-black dark:text-white hover:border-saas-neon transition-colors"
+        >
+          {theme === 'dark' ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-blue-500" />}
+          <span className="text-sm font-bold">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
+      </header>
+
+      {/* Success/Error Toast */}
+      {message.text && (
+        <div className={`mb-6 p-4 rounded-xl text-sm font-bold animate-in slide-in-from-top-4 ${message.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-saas-neon/10 text-saas-neon border border-saas-neon/20'}`}>
+          {message.text}
         </div>
-      </section>
-
-      {/* Billing */}
-      {user?.role === 'Admin' && (
-        <section className="border-2 border-black p-6 mb-6">
-          <h2 className="font-black text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-            <CreditCard size={16} /> Billing
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Manage your subscription and payment methods through the Stripe customer portal.
-          </p>
-          <button
-            className="bg-black text-white px-4 py-2 font-bold uppercase text-xs tracking-wide border-2 border-black hover:bg-white hover:text-black transition-colors opacity-50 cursor-not-allowed"
-            disabled
-            title="Stripe integration pending — add API keys to enable"
-          >
-            Manage Subscription
-          </button>
-          <p className="text-xs text-gray-400 mt-2">
-            Stripe API keys required. Add them to your <code>.env</code> file to enable billing.
-          </p>
-        </section>
       )}
 
-      {/* Logout */}
-      <section className="border-2 border-red-500 p-6">
-        <h2 className="font-black text-sm uppercase tracking-wide mb-4 text-red-600 flex items-center gap-2">
-          <LogOut size={16} /> Sign Out
-        </h2>
-        <p className="text-sm text-gray-600 mb-4">
-          End your session and return to the login page.
-        </p>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 text-white px-4 py-2 font-bold uppercase text-xs tracking-wide border-2 border-red-600 hover:bg-white hover:text-red-600 transition-colors"
-        >
-          Sign Out
-        </button>
-      </section>
+      <div className="flex flex-col md:flex-row gap-8 flex-1">
+        
+        {/* Settings Sidebar Navigation */}
+        <aside className="w-full md:w-64 shrink-0">
+          <nav className="flex flex-col space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-white dark:bg-saas-surface text-saas-neon shadow-sm border border-gray-200 dark:border-gray-800' 
+                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-saas-surface hover:text-black dark:hover:text-white border border-transparent'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Settings Content Area */}
+        <main className="flex-1 bg-white dark:bg-saas-surface rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+          
+          {/* PROFILE TAB */}
+          {activeTab === 'profile' && (
+            <form onSubmit={handleSave} className="p-8">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-black dark:text-white">Profile Information</h2>
+                <p className="text-gray-500 text-sm mt-1">Update your personal details and public profile.</p>
+              </div>
+
+              <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100 dark:border-gray-800">
+                <div className="w-20 h-20 rounded-full bg-saas-neon/20 flex items-center justify-center text-2xl font-black text-saas-neon border-2 border-saas-neon">
+                  {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
+                </div>
+                <div>
+                  <button type="button" className="px-4 py-2 bg-gray-100 dark:bg-saas-bg text-black dark:text-white rounded-lg text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                    Upload Avatar
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2">JPG, GIF or PNG. Max size of 2MB.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">First Name</label>
+                  <input type="text" value={profile.first_name} onChange={e => setProfile({...profile, first_name: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Last Name</label>
+                  <input type="text" value={profile.last_name} onChange={e => setProfile({...profile, last_name: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+              </div>
+
+              <div className="space-y-2 mb-6">
+                <label className="text-xs font-bold text-gray-400 uppercase">Email Address</label>
+                <input type="email" value={profile.email} disabled
+                  className="w-full bg-gray-100 dark:bg-saas-bg/50 border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm text-gray-500 cursor-not-allowed" />
+                <p className="text-xs text-gray-500">To change your login email, please contact support.</p>
+              </div>
+
+              <div className="space-y-2 mb-8">
+                <label className="text-xs font-bold text-gray-400 uppercase">System Role</label>
+                <div className="flex items-center gap-2 px-4 py-3 bg-saas-neon/10 border border-saas-neon/20 rounded-xl w-fit">
+                  <Shield size={16} className="text-saas-neon" />
+                  <span className="text-sm font-bold text-saas-neon">{profile.role}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50">
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* WORKSPACE TAB */}
+          {activeTab === 'workspace' && (
+            <form onSubmit={handleSave} className="p-8">
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-black dark:text-white">Workspace Settings</h2>
+                <p className="text-gray-500 text-sm mt-1">Manage your company details and tenant domain.</p>
+              </div>
+
+              <div className="space-y-6 mb-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Company Name</label>
+                  <input type="text" value={workspace.name} onChange={e => setWorkspace({...workspace, name: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Primary Industry</label>
+                  <select value={workspace.industry} onChange={e => setWorkspace({...workspace, industry: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white appearance-none">
+                    <option>Technology</option>
+                    <option>Real Estate</option>
+                    <option>Finance</option>
+                    <option>Healthcare</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50">
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  Save Workspace
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* SECURITY TAB */}
+          {activeTab === 'security' && (
+            <form onSubmit={handlePasswordChange} className="p-8">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-black dark:text-white">Change Password</h2>
+                <p className="text-gray-500 text-sm mt-1">Ensure your account is using a long, random password to stay secure.</p>
+              </div>
+              <div className="space-y-4 mb-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Current Password</label>
+                  <input required type="password" value={passwords.old_password} onChange={e => setPasswords({...passwords, old_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">New Password</label>
+                  <input required type="password" value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Confirm New Password</label>
+                  <input required type="password" value={passwords.confirm_password} onChange={e => setPasswords({...passwords, confirm_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                </div>
+              </div>
+              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50">
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Shield size={18} />} Update Password
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* NOTIFICATIONS TAB */}
+          {activeTab === 'notifications' && (
+            <div className="p-8">
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-black dark:text-white">Notification Preferences</h2>
+                <p className="text-gray-500 text-sm mt-1">Choose how you want to stay updated.</p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
+                  <div>
+                    <h4 className="font-bold text-black dark:text-white">Email Notifications</h4>
+                    <p className="text-sm text-gray-500">Get important updates delivered to your inbox.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-saas-neon/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-saas-neon"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
+                  <div>
+                    <h4 className="font-bold text-black dark:text-white">In-App Notifications</h4>
+                    <p className="text-sm text-gray-500">Receive alerts while using the dashboard.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-saas-neon/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-saas-neon"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
+                  <div>
+                    <h4 className="font-bold text-black dark:text-white">Mobile Push Notifications</h4>
+                    <p className="text-sm text-gray-500">Get alerts on your phone (Coming Soon).</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" disabled className="sr-only peer" />
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+      </div>
     </div>
   );
 }

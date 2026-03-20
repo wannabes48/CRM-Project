@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser
+from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -73,11 +73,11 @@ class TicketNoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketNote
-        fields = (
-            'id', 'ticket', 'author', 'author_name',
-            'body', 'is_internal', 'created_at',
-        )
+        fields = '__all__'
         read_only_fields = ('id', 'tenant', 'author', 'created_at')
+    
+    def get_author_name(self, obj):
+        return f"{obj.author.first_name} {obj.author.last_name}"
 
 
 class TicketListSerializer(serializers.ModelSerializer):
@@ -96,3 +96,20 @@ class TicketListSerializer(serializers.ModelSerializer):
             'subject', 'status', 'priority', 'created_at',
         )
         read_only_fields = ('id', 'tenant', 'created_at')
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = '__all__'
+        read_only_fields = ('tenant', 'assigned_to', 'created_at')
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'email', 'role']
+        read_only_fields = ['email', 'role'] # Users can't change their own role or email here
+
+class TenantSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenant
+        fields = ['name', 'domain', 'industry']
