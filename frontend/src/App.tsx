@@ -9,10 +9,12 @@ import TicketsPage from './pages/TicketsPage';
 import CalendarPage from './pages/CalendarPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
-
-// Import your pages (You can move these to a separate src/pages folder later)
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import PricingPage from './pages/PricingPage';
+import BlogTemplate from './pages/BlogTemplate';
+import ContentPage from './pages/ContentPage';
 
 export default function App() {
   return (
@@ -20,8 +22,13 @@ export default function App() {
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/blog/sales-automation" element={<BlogTemplate />} />
+          <Route path="/privacy" element={<ContentPage />} />
+          <Route path="/terms" element={<ContentPage />} />
 
           {/* Protected CRM Routes */}
           <Route element={<ProtectedRoute />}>
