@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, X, Zap, Building, LayoutDashboard, ArrowRight } from 'lucide-react';
+import { CheckCircle2, X, Zap, Building, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import Footer from '../components/layout/Footer';
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true);
@@ -49,7 +50,7 @@ export default function PricingPage() {
           <span className="text-xl font-black tracking-tight text-gray-900">Xentrix</span>
         </Link>
         <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
-          Back to Home <ArrowRight size={16} />
+          Back to Home <ArrowLeft size={16} />
         </Link>
       </nav>
 
@@ -119,6 +120,9 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+      </div>
+      <div className="mt-20">
+        <Footer />
       </div>
     </div>
   );

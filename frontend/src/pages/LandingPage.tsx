@@ -66,10 +66,16 @@ export default function LandingPage() {
         
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8 text-sm font-bold text-gray-500">
-          <a href="#about" className="hover:text-black transition-colors">About</a>
+          <Link to="/about" className="hover:text-black transition-colors">
+            About
+          </Link>
           <a href="#features" className="hover:text-black transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-black transition-colors">Pricing</a>
-          <a href="#company" className="hover:text-black transition-colors">Company</a>
+          <Link to="/pricing" className="hover:text-black transition-colors">
+            Pricing
+          </Link>
+          <Link to="/contact" className="hover:text-black transition-colors">
+            Contact
+          </Link>
         </div>
 
         <div className="hidden md:flex items-center gap-4">
@@ -93,10 +99,16 @@ export default function LandingPage() {
       {/* Mobile Menu Overlay */}
       <div className={`fixed inset-0 bg-white z-40 transition-transform duration-300 ease-in-out md:hidden flex flex-col pt-24 px-6 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col gap-6 text-2xl font-black tracking-tight mb-12">
-          <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>About</a>
+          <Link to="/about" onClick={() => setIsMobileMenuOpen(false)}>
+            About
+          </Link>   
           <a href="#features" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
-          <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)}>Pricing</a>
-          <a href="#company" onClick={() => setIsMobileMenuOpen(false)}>Company</a>
+          <Link to="/pricing" onClick={() => setIsMobileMenuOpen(false)}>
+            Pricing
+          </Link>   
+          <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+            Contact
+          </Link>
         </div>
         <div className="flex flex-col gap-4 mt-auto mb-12">
           <Link to="/login" className="text-center font-bold text-gray-900 border-2 border-gray-200 py-4 rounded-2xl">Log In</Link>
@@ -341,7 +353,7 @@ export default function LandingPage() {
                 <ul className="space-y-4 text-sm text-gray-400">
                   <li><a href="/about" className="hover:text-saas-neon transition-colors">About Us</a></li>
                   <li><a href="/careers" className="hover:text-saas-neon transition-colors">Careers</a></li>
-                  <li><a href="/blog" className="hover:text-saas-neon transition-colors">Blog</a></li>
+                  <li><a href="/blog/sales-automation" className="hover:text-saas-neon transition-colors">Blog</a></li>
                   <li><a href="/contact" className="hover:text-saas-neon transition-colors">Contact</a></li>
                 </ul>
               </div>

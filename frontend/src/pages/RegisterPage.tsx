@@ -2,6 +2,7 @@ import React, { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Building, User, ArrowRight, Loader2, Hexagon, Zap, BarChart3, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { LayoutDashboard, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -40,21 +41,25 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4 relative overflow-hidden">
-      
+        <Link to="/" className="absolute top-6 left-6 md:top-10 md:left-10 text-gray-100 hover:text-white flex items-center gap-2 text-sm font-bold transition-colors z-50">
+            <ArrowLeft size={16} /> Back to Home
+        </Link>
+
       {/* Background Decorative Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-saas-neon/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
-
+      
       <div className="w-full max-w-5xl flex flex-col md:flex-row bg-[#151516]/80 backdrop-blur-xl rounded-3xl border border-gray-800 shadow-2xl overflow-hidden relative z-10">
         
         {/* Left Side: Registration Form */}
         <div className="flex-1 p-8 md:p-12 flex flex-col justify-center">
-          <div className="flex items-center gap-2 mb-8">
+          <Link to="/" className="flex items-center gap-2 mb-8">
             <div className="bg-saas-neon text-black p-2 rounded-lg">
               <Hexagon size={24} fill="currentColor" />
             </div>
             <span className="text-2xl font-black text-white tracking-tight">Xentrix<span className="text-saas-neon">.CRM</span></span>
-          </div>
+          </Link>
+          
 
           <h1 className="text-3xl font-black text-white mb-2">Initialize Workspace</h1>
           <p className="text-gray-400 text-sm mb-8">Set up your company tenant and admin account in seconds.</p>

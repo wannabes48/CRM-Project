@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Clock } from 'lucide-react';
+import Footer from '../components/layout/Footer';
 
 export default function BlogTemplate() {
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-emerald-200 pb-24">
+    <div className="flex flex-col min-h-screen bg-white font-sans selection:bg-emerald-200 pb-24">
       {/* Minimal Header */}
       <header className="border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
@@ -14,7 +15,7 @@ export default function BlogTemplate() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+      <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
         {/* Article Meta */}
         <div className="mb-12 text-center">
           <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-sm mb-4">
@@ -59,6 +60,8 @@ export default function BlogTemplate() {
           <p>By removing the friction from your team's day-to-day operations, they can focus on what they do best: building relationships and closing deals.</p>
         </article>
       </main>
+
+      <Footer />
     </div>
   );
 }

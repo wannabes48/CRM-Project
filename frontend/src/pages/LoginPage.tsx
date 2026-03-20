@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Shield, Users, Briefcase, ArrowRight, Loader2, Hexagon } from 'lucide-react';
+import { Mail, Lock, Shield, Users, Briefcase, ArrowRight, ArrowLeft, Loader2, Hexagon } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -32,6 +32,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4 relative overflow-hidden">
+      <Link to="/" className="absolute top-6 left-6 md:top-10 md:left-10 text-gray-100 hover:text-white flex items-center gap-2 text-sm font-bold transition-colors z-50">
+        <ArrowLeft size={16} /> Back to Home
+      </Link>
       {/* Background Decorative Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-saas-neon/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
@@ -39,9 +42,11 @@ export default function LoginPage() {
       <div className="w-full max-w-5xl flex flex-col md:flex-row bg-[#151516]/80 backdrop-blur-xl rounded-3xl border border-gray-800 shadow-2xl overflow-hidden relative z-10">
         {/* Left Side: Login Form */}
         <div className="flex-1 p-8 md:p-12 flex flex-col justify-center">
+          <Link to="/" className="flex-1 p-8 md:p-12 flex flex-col justify-center">
           <div className="bg-saas-neon text-black p-2 rounded-lg w-fit">
             <Hexagon size={24} fill="currentColor" />
           </div>
+          </Link>
           <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">SaaS CRM.</h1>
           <h1 className="text-3xl font-black text-white mb-2">Welcome back</h1>
           <p className="text-gray-500 mb-10 text-sm uppercase tracking-wide font-semibold">
@@ -81,7 +86,7 @@ export default function LoginPage() {
             </div> 
             
             <div className="relative"> 
-              <Lock className="absolute left-4 top-3.5 text-gray-500" size={18} />
+              <Lock className="absolute right-4 top-3.5 text-gray-500" size={18} />
               <input
                 type="password"
                 value={password}
