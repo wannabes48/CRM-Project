@@ -341,7 +341,7 @@ export default function LandingPage() {
               <div>
                 <h4 className="text-white font-bold mb-6">Product</h4>
                 <ul className="space-y-4 text-sm text-gray-400">
-                  <li><a href="/features" className="hover:text-saas-neon transition-colors">Features</a></li>
+                  <li><a href="/#features" className="hover:text-saas-neon transition-colors">Features</a></li>
                   <li><a href="/integrations" className="hover:text-saas-neon transition-colors">Integrations</a></li>
                   <li><a href="/pricing" className="hover:text-saas-neon transition-colors">Pricing</a></li>
                   <li><a href="/changelog" className="hover:text-saas-neon transition-colors">Changelog</a></li>

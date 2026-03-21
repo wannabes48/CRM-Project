@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, X, Zap, Building, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import Footer from '../components/layout/Footer';
+import api, { useAuth } from '../contexts/AuthContext';
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const { user } = useAuth(); 
+  const navigate = useNavigate();
 
   const plans = [
     {
@@ -39,6 +44,34 @@ export default function PricingPage() {
       missing: []
     }
   ];
+
+  // 2. Add the Checkout function
+  const handleCheckout = async (planName: string) => {
+
+    if (!user) {
+      navigate('/register');
+      return; 
+    }
+
+    setLoadingPlan(planName);
+    try {
+      // Send the request to Django
+      const res = await api.post('create-checkout-session/', { 
+        plan: planName.toLowerCase(), 
+        is_annual: annual 
+      });
+      
+      // Stripe returns a secure URL. We redirect the user's browser there immediately.
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error("Failed to start checkout", err);
+      alert("Something went wrong with the checkout process.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-emerald-200 pb-24">
@@ -98,9 +131,13 @@ export default function PricingPage() {
                 {annual && plan.monthly > 0 && <p className="text-xs text-emerald-600 font-bold mt-1">Billed ${plan.annual * 12} yearly</p>}
               </div>
 
-              <Link to="/register" className={`w-full block text-center font-bold py-3 rounded-xl transition-all mb-8 ${plan.popular ? 'bg-[#064E3B] hover:bg-[#043d2e] text-white shadow-lg' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200'}`}>
-                {plan.btnText}
-              </Link>
+              <button 
+                onClick={() => handleCheckout(plan.name)} // 3. Attach the function here
+                disabled={loadingPlan === plan.name}
+                className={`w-full block text-center font-bold py-3 rounded-xl transition-all mb-8 ${plan.popular ? 'bg-[#064E3B] hover:bg-[#043d2e] text-white shadow-lg' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200'}`}
+                >
+                {loadingPlan === plan.name ? 'Connecting...' : plan.btnText}
+              </button>
 
               <div className="space-y-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-900 mb-4">What's included</p>

@@ -20,6 +20,8 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import SecurityPage from './pages/SecurityPage';
+import SuccessPage from './pages/SuccessPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 export default function App() {
   return (
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/security" element={<SecurityPage />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Protected CRM Routes */}
           <Route element={<ProtectedRoute />}>

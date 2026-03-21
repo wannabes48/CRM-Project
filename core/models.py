@@ -11,6 +11,10 @@ class Tenant(models.Model):
     domain = models.CharField(max_length=255, blank=True, null=True)
     industry = models.CharField(max_length=100, default='Technology')
     stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    subscription_status = models.CharField(max_length=50, default='trialing') # 'trialing', 'active', 'past_due', 'canceled'
+    plan_tier = models.CharField(max_length=50, default='Free')
     plan_name = models.CharField(max_length=100, default='free')
     subscription_status = models.CharField(
         max_length=50,

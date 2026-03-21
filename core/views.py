@@ -1,9 +1,16 @@
+import stripe
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from rest_framework.response import Response
+
 from django.db.models import Sum, Count, Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
+from .emails import send_welcome_email
 
 from .models import Tenant, CustomUser, Contact, Deal, Ticket
 from .serializers import ContactSerializer, DealSerializer, TicketSerializer, EventSerializer, TicketNoteSerializer
@@ -13,6 +20,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
 from django.contrib.auth import update_session_auth_hash
 from .serializers import UserProfileSerializer, TenantSettingsSerializer
+
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_your_key_here')
 
 # --- Explicit, Secure ViewSets ---
 class ContactViewSet(viewsets.ModelViewSet):
@@ -24,9 +33,7 @@ class ContactViewSet(viewsets.ModelViewSet):
         tenant = user.tenant
         qs = Contact.objects.filter(tenant=tenant).count()
 
-        if user.role == 'Sales Rep':
-            qs = qs.filter(assigned_to=user)
-        return qs.order_by('-created_at')
+        return Contact.objects.filter(tenant=self.request.user.tenant).order_by('-created_at')
         
         # --- THE DETECTIVE WORK ---
         print(f"🕵️ WHO IS ASKING? User: {user.username} | Workspace: {tenant.name} | Contacts Found: {count}")
@@ -108,6 +115,9 @@ def register_tenant(request):
             user = CustomUser.objects.create_user(
                 username=username, email=email, password=password, tenant=tenant, role='Admin'
             )
+
+            send_welcome_email(user, tenant)
+
         return Response({'message': 'Workspace created successfully'}, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -224,3 +234,105 @@ def change_password(request):
     update_session_auth_hash(request, user) # Prevents the user from being logged out after password change
     
     return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+
+# 1. CREATE CHECKOUT SESSION
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_checkout_session(request):
+    tenant = request.user.tenant
+    
+    # In a real app, you get these Price IDs from your Stripe Dashboard
+    price_id = 'price_1TD78FF640qNaOCiXDlN4KUk' # Replace with your actual Stripe Price ID
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            client_reference_id=str(tenant.id), # Crucial: Tells the webhook WHICH tenant paid
+            customer_email=request.user.email,
+            payment_method_types=['card'],
+            line_items=[
+                {'price': price_id, 'quantity': 1},
+            ],
+            mode='subscription',
+            success_url='http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='http://localhost:5173/pricing',
+        )
+        return Response({'url': checkout_session.url})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+# 2. HANDLE STRIPE WEBHOOKS
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', 'whsec_your_secret_here')
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+    except ValueError:
+        return HttpResponse(status=400) # Invalid payload
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400) # Invalid signature
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        
+        # 1. Get the tenant ID we passed in earlier
+        tenant_id = session.get('client_reference_id')
+        
+        # 2. Update the database to unlock the software
+        if tenant_id:
+            tenant = Tenant.objects.get(id=tenant_id)
+            tenant.stripe_customer_id = session.get('customer')
+            tenant.stripe_subscription_id = session.get('subscription')
+            tenant.subscription_status = 'active'
+            tenant.plan_tier = 'Professional'
+            tenant.save()
+
+    # Handle failed payments or cancellations
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        try:
+            tenant = Tenant.objects.get(stripe_subscription_id=subscription.id)
+            tenant.subscription_status = 'canceled'
+            tenant.save()
+        except Tenant.DoesNotExist:
+            pass
+
+    return HttpResponse(status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_customer_portal_session(request):
+    tenant = request.user.tenant
+    
+    # If they haven't bought anything yet, they don't have a portal
+    if not tenant.stripe_customer_id:
+        return Response({'error': 'No active billing account found.'}, status=400)
+
+    try:
+        portal_session = stripe.billing_portal.Session.create(
+            customer=tenant.stripe_customer_id,
+            return_url='http://localhost:5173/settings', # Sends them back to your app when they click "Return"
+        )
+        return Response({'url': portal_session.url})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_subscription_status(request):
+    try:
+        tenant = request.user.tenant
+        
+        # Determine if they have access to premium features
+        is_active = tenant.subscription_status in ['active', 'trialing']
+
+        return Response({
+            'plan_tier': tenant.plan_tier,               # e.g., 'Free', 'Professional', 'Enterprise'
+            'subscription_status': tenant.subscription_status, # e.g., 'active', 'canceled', 'past_due'
+            'is_active': is_active,                      # A helpful boolean for your React frontend
+        })
+    except Exception as e:
+        return Response({'error': 'Could not fetch subscription details.'}, status=400)

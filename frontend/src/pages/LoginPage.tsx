@@ -6,6 +6,7 @@ import { Mail, Lock, Shield, Users, Briefcase, ArrowRight, ArrowLeft, Loader2, H
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,11 +18,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login({ username, password });
+      await login(identifier, password);
       await new Promise(res => setTimeout(res, 1000));
 
       console.log(`Logging in as ${username}`);
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
 
     } catch (err: any) {
       setError(err.response?.data?.non_field_errors?.[0] || 'Login failed.');
@@ -63,15 +64,15 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              Username
+              Username/Email
             </label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               className="w-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-saas-surface text-black dark:text-white p-3 text-sm font-semibold focus:outline-none focus:border-saas-neon placeholder:text-gray-400 transition-colors"
-              placeholder="Enter your username"
+              placeholder="Enter your username/email"
             />
           </div>
 

@@ -3,6 +3,9 @@ import { MoreHorizontal, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import api from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { Navigate, Outlet } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const profitData = [
   { name: 'Mon', profit: 12400 }, { name: 'Tue', profit: 18000 }, { name: 'Wed', profit: 15000 },
@@ -11,6 +14,7 @@ const profitData = [
 
 export default function DashboardPage() {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>({
     kpis: { net_revenue: 0, arr: 0, new_orders: 0 },
@@ -33,10 +37,15 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="w-12 h-12 border-4 border-saas-neon border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#09090B]">
+        <Loader2 className="animate-spin text-saas-neon" size={40} />
       </div>
     );
+  }
+
+  if (!user) {
+    // Note: use `replace` so they can't hit the back button to return to the dashboard
+    return <Navigate to="/login" replace />; 
   }
 
   const { kpis, sales_overview, customers } = dashboardData;

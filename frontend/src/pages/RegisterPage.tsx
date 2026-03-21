@@ -1,37 +1,64 @@
 import React, { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building, User, ArrowRight, Loader2, Hexagon, Zap, BarChart3, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Building, User, ArrowRight, Loader2, Hexagon, Zap, BarChart3, ShieldCheck, CheckCircle2} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { LayoutDashboard, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const [tenantName, setTenantName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match. Please try again.");
+      setStatus('error');
+      return;
+    }
+
+    // 2. Validate Password Length (Optional but recommended)
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
+      setStatus('error');
+      return;
+    }
+
+    setStatus('submitting');
+    setErrorMessage('');
+
     setError('');
     setLoading(true);
     
     try {
       await register({ 
         tenantName: tenantName, 
-        username: username, 
+        username: email.split('@')[0],
+        first_name: firstName,
+        last_name: lastName, 
         email: email, 
         password: password 
       });
       console.log('Registering payload:', { tenantName, username, email, password });
+
+      setStatus('success');
       
       // Mock success and redirect to login
       setTimeout(() => {
         navigate('/login');
-      }, 1000);
+      }, 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.non_field_errors?.[0] || 'Registration failed.');
     } finally {
@@ -59,19 +86,36 @@ export default function RegisterPage() {
             </div>
             <span className="text-2xl font-black text-white tracking-tight">Xentrix<span className="text-saas-neon">.CRM</span></span>
           </Link>
+
+          {status === 'success' ? (
+            /* SUCCESS STATE UI */
+            <div className="text-center py-10 animate-in zoom-in duration-500">
+              <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
+                <CheckCircle2 size={40} className="text-emerald-400" />
+              </div>
+              <h2 className="text-3xl font-black text-white mb-3">Workspace Created!</h2>
+              <p className="text-gray-400 text-sm leading-relaxed mb-2">
+                Welcome aboard, {firstName}. We are setting up your environment.
+              </p>
+              <p className="text-saas-neon font-bold text-sm animate-pulse mt-6">
+                Redirecting to login...
+              </p>
+            </div>
+          ) : (
           
+          <div className="animate-in fade-in duration-500">
+            <h1 className="text-3xl font-black text-white mb-2">Initialize Workspace</h1>
+            <p className="text-gray-400 text-sm mb-8">Set up your company tenant and admin account in seconds.</p>
 
-          <h1 className="text-3xl font-black text-white mb-2">Initialize Workspace</h1>
-          <p className="text-gray-400 text-sm mb-8">Set up your company tenant and admin account in seconds.</p>
-
-          {error && (
+          {status === 'error' && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold rounded-xl animate-in fade-in">
-              {error}
+              {errorMessage}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
+            {/* Workspace Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Workspace Name</label>
@@ -88,20 +132,37 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Admin Username</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-3.5 text-gray-500" size={18} />
-                  <input 
-                    type="text" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="johndoe"
-                    required
-                    className="w-full bg-[#09090B] border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-saas-neon transition-colors"
-                  />
+              {/* First & Last Name */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">First Name</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-3.5 text-gray-500" size={18} />
+                      <input 
+                        type="text" 
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Jane"
+                        required
+                        className="w-full bg-[#09090B] border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-saas-neon transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Last Name</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-3.5 text-gray-500" size={18} />
+                      <input 
+                        type="text" 
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Doe"
+                        required
+                        className="w-full bg-[#09090B] border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-saas-neon transition-colors"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -151,6 +212,8 @@ export default function RegisterPage() {
               Sign in here
             </Link>
           </p>
+          </div>
+          )}
         </div>
 
         {/* Right Side: Value Proposition / Features */}

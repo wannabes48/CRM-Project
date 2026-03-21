@@ -31,7 +31,9 @@ export default function ContactsPage() {
       setLoading(false);
     }
   };
-  fetchContacts();
+  React.useEffect(() => {
+    fetchContacts();
+  }, []);
 
   if (loading) {
     return (

@@ -121,9 +121,9 @@ CSRF_COOKIE_HTTPONLY = False  # Frontend JS needs to read this
 
 # ─── Stripe (placeholder) ───────────────────────────────────────────────────
 
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
 # ─── Internationalization  ───────────────────────────────────────────────────
 
@@ -137,3 +137,23 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# settings.py
+
+# For local testing: Prints the email to your terminal
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# When deploying to production, you will swap this to your SMTP provider 
+# (like SendGrid, Amazon SES, or Mailgun):
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey'
+# EMAIL_HOST_PASSWORD = 'your-sendgrid-api-key'
+# DEFAULT_FROM_EMAIL = 'Xentrix Team <hello@xentrix.com>'
+
+AUTHENTICATION_BACKENDS = [
+    'core.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

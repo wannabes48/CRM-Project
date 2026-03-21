@@ -1,15 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun } from 'lucide-react';
+import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck} from 'lucide-react';
 import api from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
-type Tab = 'profile' | 'workspace' | 'security' | 'notifications';
+type Tab = 'profile' | 'workspace' | 'security' | 'billing' | 'team' | 'notifications';
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const handleManageBilling = async () => {
+    setLoading(true);
+    setIsRedirecting(true);
+    try {
+      const res = await api.post('create-portal-session/');
+      
+      // Redirect to the secure Stripe portal
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error || "Could not load billing portal.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [subscription, setSubscription] = useState({
+    plan_tier: 'Loading...',
+    subscription_status: 'loading',
+    is_active: false
+  });
+
+  useEffect(() => {
+    // Fetch the status when the component mounts
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get('subscription-status/');
+        setSubscription(res.data);
+      } catch (err) {
+        console.error("Failed to fetch subscription", err);
+      }
+    };
+    
+    fetchStatus();
+  }, []);
 
   // Form States
   const [profile, setProfile] = useState({first_name: '', last_name: '', email: '', role: ''});
@@ -81,6 +121,8 @@ export default function SettingsPage() {
     { id: 'profile', label: 'My Profile', icon: <User size={18} /> },
     { id: 'workspace', label: 'Workspace', icon: <Building size={18} /> },
     { id: 'security', label: 'Security', icon: <Lock size={18} /> },
+    { id: 'billing', label: 'Billing', icon: <CreditCard size={18} /> },
+    { id: 'team', label: 'Team Members', icon: <Users size={18} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
   ];
 
@@ -188,6 +230,7 @@ export default function SettingsPage() {
               </div>
             </form>
           )}
+          
 
           {/* WORKSPACE TAB */}
           {activeTab === 'workspace' && (
@@ -223,6 +266,73 @@ export default function SettingsPage() {
                 </button>
               </div>
             </form>
+          )}
+
+          {/* BILLING TAB */}
+          {activeTab === 'billing' && (
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-black dark:text-white">Billing & Subscription</h2>
+                <p className="text-gray-500 text-sm mt-1">Manage your payment methods, view invoices, and change your plan.</p>
+              </div>
+
+              {/* Current Plan Overview Card */}
+              <div className="bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl">
+                    <CreditCard size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Current Plan</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-2xl font-black text-black dark:text-white">{subscription.plan_tier}</p>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border ${
+                        subscription.is_active 
+                          ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' 
+                          : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30'
+                      }`}>
+                        <ShieldCheck size={14} /> {subscription.subscription_status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Portal Action Section */}
+              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl">
+                  We use Stripe to securely manage your billing details. Clicking the button below will open a secure window where you can update your credit card, download past invoices, or cancel your subscription.
+                </p>
+
+                <div className="flex justify-start">
+                  <button 
+                    onClick={handleManageBilling}
+                    disabled={isRedirecting} 
+                    className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50"
+                  >
+                    {isRedirecting ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <>Open Billing Portal <ExternalLink size={18} /></>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TEAM TAB */}
+          {activeTab === 'team' && (
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-xl font-bold text-black dark:text-white">Team Management</h2>
+                <p className="text-gray-500 text-sm mt-1">Manage your team members and their roles.</p>
+              </div>
+              {/* Placeholder for Team Management UI */}
+              <div className="bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                <p className="text-gray-500 dark:text-gray-400">Team management features will be available in a future update.</p>
+              </div>
+            </div>  
           )}
 
           {/* SECURITY TAB */}

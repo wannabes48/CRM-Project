@@ -142,9 +142,9 @@ export default function DashboardLayout() {
           </div>
         )}
 
-        {isLeftSidebarOpen && <div className="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Dashboards</div>}
+        {isLeftSidebarOpen && <div className="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Dashboard</div>}
         <nav className="space-y-2 mb-8 w-full">
-          <NavItem to="/" icon={<LayoutDashboard size={20} />} label="Overview" isOpen={isLeftSidebarOpen} />
+          <NavItem to="/dashboard" icon={<LayoutDashboard size={20} />} label="Overview" isOpen={isLeftSidebarOpen} />
           <NavItem to="/contacts" icon={<Users size={20} />} label="Directory" isOpen={isLeftSidebarOpen} />
           <NavItem to="/pipeline" icon={<Briefcase size={20} />} label="Pipeline" isOpen={isLeftSidebarOpen} />
           <NavItem to="/tickets" icon={<TicketIcon size={20} />} label="Support" isOpen={isLeftSidebarOpen} />

@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api/', // Adjust to your Django server URL
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 api.interceptors.request.use(
@@ -33,7 +36,7 @@ api.interceptors.response.use(
       originalRequest._retry = true; // Mark it so we don't get stuck in an infinite loop
 
       try {
-        const refreshToken = localStorage.getItem('refresh');
+        const refreshToken = localStorage.getItem('refresh_token');
         
         // Ask Django for a new access token
         const response = await axios.post('http://localhost:8000/api/token/refresh/', {
@@ -42,7 +45,7 @@ api.interceptors.response.use(
 
         // Save the new token
         const newAccessToken = response.data.access;
-        localStorage.setItem('access', newAccessToken);
+        localStorage.setItem('access_token', newAccessToken);
 
         // Update the failed request's header with the new token and retry it
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -50,8 +53,8 @@ api.interceptors.response.use(
         
       } catch (refreshError) {
         // If the refresh token is ALSO expired, force the user to log in again
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -70,8 +73,8 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (credentials: any) => Promise<void>;
+  user: any;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   register: (userData: any) => Promise<void>;
   loading: boolean;
@@ -116,21 +119,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     navigate('/login');
   };
 
-  const login = async (credentials: any) => {
+  const login = async (identifier: string, password: string) => {
     // Assuming you are using djangorestframework-simplejwt endpoints
-    const response = await api.post('token/', credentials);
-    const { access, refresh } = response.data;
+    const response = await api.post('token/', 
+      {
+        username: identifier,
+        password: password
+      });
 
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
+    localStorage.setItem('access_token', response.data.access);
+    localStorage.setItem('refresh_token', response.data.refresh);
 
-    api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+    api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
     
-    const decodedUser = jwtDecode<User>(access);
+    const decodedUser = jwtDecode<User>(response.data.access);
     setUser(decodedUser);
-    
-    // Send them to the dashboard upon successful login
-    navigate('/'); 
   };
 
   const logout = () => {
