@@ -13,10 +13,31 @@ class ActivitySerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'tenant', 'author', 'created_at')
 
+class DealSerializer(serializers.ModelSerializer):
+    contact_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Deal
+        fields = ('__all__')
+        read_only_fields = ('tenant', 'created_at')
+
+    def get_contact_name(self, obj):
+        if obj.contact:
+            return f"{obj.contact.first_name} {obj.contact.last_name}"
+        return "Unknown"
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = '__all__'
+        read_only_fields = ('tenant', 'created_at')
+
 
 class ContactSerializer(serializers.ModelSerializer):
     full_name = serializers.ReadOnlyField()
     activities = ActivitySerializer(many=True, read_only=True)
+    deals = DealSerializer(many=True, read_only=True)
+    tickets = TicketSerializer(many=True, read_only=True)
     assigned_to_name = serializers.CharField(
         source='assigned_to.username', read_only=True, default=None
     )
@@ -26,7 +47,7 @@ class ContactSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'first_name', 'last_name', 'full_name', 'email',
             'phone', 'company', 'tags', 'assigned_to', 'assigned_to_name',
-            'activities', 'created_at', 'updated_at',
+            'activities', 'deals', 'tickets', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'tenant', 'created_at', 'updated_at')
 
@@ -46,26 +67,6 @@ class ContactListSerializer(serializers.ModelSerializer):
             'created_at',
         )
         read_only_fields = ('id', 'tenant', 'created_at')
-
-
-class DealSerializer(serializers.ModelSerializer):
-    contact_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Deal
-        fields = ('__all__')
-        read_only_fields = ('tenant', 'created_at')
-
-    def get_contact_name(self, obj):
-        if obj.contact:
-            return f"{obj.contact.first_name} {obj.contact.last_name}"
-        return "Unknown"
-
-class TicketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = '__all__'
-        read_only_fields = ('tenant', 'created_at')
 
 
 class TicketNoteSerializer(serializers.ModelSerializer):

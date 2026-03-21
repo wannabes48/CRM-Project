@@ -2,10 +2,6 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# ==========================================
-# 1. CORE SYSTEM & TENANT ARCHITECTURE
-# ==========================================
-
 class Tenant(models.Model):
     """The core organization/workspace table."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

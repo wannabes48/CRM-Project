@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Plus, MoreHorizontal, Mail, Phone, Building } from 'lucide-react';
 import NewContactModal from '../components/modals/NewContactModal';
 import api from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface Contact {
   id: string;
@@ -87,9 +88,9 @@ export default function ContactsPage() {
                       <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
                         {contact.first_name.charAt(0)}{contact.last_name.charAt(0)}
                       </div>
-                      <div>
-                        <p className="font-medium text-black dark:text-white">{contact.first_name} {contact.last_name}</p>
-                        <p className="text-xs text-gray-500">Added {new Date(contact.created_at).toLocaleDateString()}</p>
+                      <div className="ml-4">
+                        <Link to={`/contacts/${contact.id}`} className="font-medium text-black dark:text-white">{contact.first_name} {contact.last_name}</Link>
+                        <Link to={`/contacts/${contact.id}`} className="text-xs text-gray-500">Added {new Date(contact.created_at).toLocaleDateString()}</Link>
                       </div>
                     </div>
                   </td>

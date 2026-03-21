@@ -22,6 +22,7 @@ import IntegrationsPage from './pages/IntegrationsPage';
 import SecurityPage from './pages/SecurityPage';
 import SuccessPage from './pages/SuccessPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ContactDetailPage from './pages/ContactDetailPage';
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/contacts/:id" element={<ContactDetailPage />} />
               <Route path="/pipeline" element={<PipelinePage />} />
               <Route path="/tickets" element={<TicketsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />

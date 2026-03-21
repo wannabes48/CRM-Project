@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Moon, Sun, Bell, Globe, Search, Menu, LayoutDashboard, Users, Briefcase, Ticket as TicketIcon, Phone, Settings, HelpCircle, CalendarIcon, BarChart3, LogOut } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -11,6 +11,18 @@ export default function DashboardLayout() {
   
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  
+  const location = useLocation();
+  const pathTitles: Record<string, string> = {
+    '/dashboard': 'Overview',
+    '/contacts': 'Directory',
+    '/pipeline': 'Pipeline',
+    '/tickets': 'Support',
+    '/calendar': 'Calendar',
+    '/reports': 'Reports',
+    '/settings': 'Settings',
+  };
+  const pageTitle = pathTitles[location.pathname] || 'Dashboard';
 
   // --- NEW SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,7 +186,7 @@ export default function DashboardLayout() {
               <Menu size={20} />
             </button>
             <div className="hidden sm:block">
-              <span>Workspace</span> <span className="text-gray-300 dark:text-gray-600">/</span> <span className="text-black dark:text-white font-medium">Dashboard</span>
+              <span>Workspace</span> <span className="text-gray-300 dark:text-gray-600">/</span> <span className="text-black dark:text-white font-medium">{pageTitle}</span>
             </div>
           </div>
           

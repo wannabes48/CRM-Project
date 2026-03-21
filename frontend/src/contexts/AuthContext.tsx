@@ -27,7 +27,9 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response, // If the request succeeds, just return it
+  (response) =>{ 
+    return response;
+  }, // If the request succeeds, just return it
   async (error) => {
     const originalRequest = error.config;
 
@@ -37,6 +39,10 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
+
+        if (!refreshToken) {
+           throw new Error("No refresh token available");
+        }
         
         // Ask Django for a new access token
         const response = await axios.post('http://localhost:8000/api/token/refresh/', {
@@ -49,12 +55,17 @@ api.interceptors.response.use(
 
         // Update the failed request's header with the new token and retry it
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        
+        // Retry the original request seamlessly!
         return api(originalRequest);
         
       } catch (refreshError) {
         // If the refresh token is ALSO expired, force the user to log in again
+        console.error("Session expired. Logging out.");
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        
+        // Force them back to login page
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
