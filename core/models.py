@@ -1,56 +1,64 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from .managers import TenantManager
 
+# ==========================================
+# 1. CORE SYSTEM & TENANT ARCHITECTURE
+# ==========================================
 
 class Tenant(models.Model):
+    """The core organization/workspace table."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
-    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     domain = models.CharField(max_length=255, blank=True, null=True)
     industry = models.CharField(max_length=100, default='Technology')
-    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
-    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
-    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
-    subscription_status = models.CharField(max_length=50, default='trialing') # 'trialing', 'active', 'past_due', 'canceled'
-    plan_tier = models.CharField(max_length=50, default='Free')
-    plan_name = models.CharField(max_length=100, default='free')
-    subscription_status = models.CharField(
-        max_length=50,
-        default='trialing',
-        choices=(
-            ('trialing', 'Trialing'),
-            ('active', 'Active'),
-            ('past_due', 'Past Due'),
-            ('canceled', 'Canceled'),
-            ('unpaid', 'Unpaid'),
-        ),
-    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-
 class TenantAwareModel(models.Model):
-    """Abstract base class that ensures all child models belong to a tenant."""
+    """Abstract base class that injects tenant_id into EVERY table."""
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
-
-    objects = TenantManager()
 
     class Meta:
         abstract = True
 
 
-class CustomUser(AbstractUser, TenantAwareModel):
+class Subscription(TenantAwareModel):
+    """Billing and subscription state for the tenant."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    ROLE_CHOICES = (
-        ('Admin', 'Admin'),
-        ('Manager', 'Manager'),
-        ('Sales Rep', 'Sales Rep'),
-    )
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='Sales Rep')
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, default='trialing') # active, canceled, past_due
+    plan_tier = models.CharField(max_length=50, default='Free')
+    current_period_end = models.DateTimeField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.tenant.name} - {self.plan_tier} ({self.status})"
+
+
+# ==========================================
+# 2. USERS & ROLES
+# ==========================================
+
+class Role(TenantAwareModel):
+    """Custom roles assigned per tenant (e.g., Admin, Sales Manager)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    permissions = models.JSONField(default=dict, blank=True) # Granular JSON permissions
+
+    def __str__(self):
+        return self.name
+
+
+class CustomUser(AbstractUser, TenantAwareModel):
+    """User account, tied to a specific tenant and role."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Replaced choice field with Foreign Key to the new Role table
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
 
     # Avoid clashes with Django's default auth system
     groups = models.ManyToManyField(
@@ -65,8 +73,13 @@ class CustomUser(AbstractUser, TenantAwareModel):
     )
 
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        role_name = self.role.name if self.role else "No Role"
+        return f"{self.username} ({role_name})"
 
+
+# ==========================================
+# 3. CRM CORE (Contacts, Pipelines, Deals)
+# ==========================================
 
 class Contact(TenantAwareModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -94,28 +107,15 @@ class Contact(TenantAwareModel):
         return f"{self.first_name} {self.last_name}"
 
 
-class Activity(TenantAwareModel):
-    """Activity timeline entry linked to a Contact."""
-    TYPE_CHOICES = (
-        ('call', 'Call'),
-        ('email', 'Email'),
-        ('meeting', 'Meeting'),
-        ('note', 'Note'),
-        ('task', 'Task'),
-    )
+class Pipeline(TenantAwareModel):
+    """Sales pipelines (e.g., 'Enterprise Sales', 'Partner Onboarding')."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='activities')
-    author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
-    activity_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='note')
-    description = models.TextField()
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name_plural = 'activities'
-
     def __str__(self):
-        return f"{self.activity_type}: {self.description[:50]}"
+        return self.name
 
 
 class Deal(TenantAwareModel):
@@ -127,6 +127,9 @@ class Deal(TenantAwareModel):
         ('Lost', 'Lost'),
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Linked to Pipeline table
+    pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE, related_name='deals', null=True, blank=True)
     contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='deals')
     assigned_to = models.ForeignKey(
         CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
@@ -145,6 +148,10 @@ class Deal(TenantAwareModel):
     def __str__(self):
         return f"{self.title} — {self.stage}"
 
+
+# ==========================================
+# 4. SUPPORT (Tickets)
+# ==========================================
 
 class Ticket(TenantAwareModel):
     STATUS_CHOICES = (
@@ -178,6 +185,34 @@ class Ticket(TenantAwareModel):
         return f"[{self.status}] {self.subject}"
 
 
+# ==========================================
+# 5. SUPPLEMENTARY MODELS (Events, Notes)
+# ==========================================
+
+class Activity(TenantAwareModel):
+    """Activity timeline entry linked to a Contact."""
+    TYPE_CHOICES = (
+        ('call', 'Call'),
+        ('email', 'Email'),
+        ('meeting', 'Meeting'),
+        ('note', 'Note'),
+        ('task', 'Task'),
+    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='activities')
+    author = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
+    activity_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='note')
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'activities'
+
+    def __str__(self):
+        return f"{self.activity_type}: {self.description[:50]}"
+
+
 class TicketNote(TenantAwareModel):
     """Note on a ticket — can be internal or customer-facing."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -195,15 +230,16 @@ class TicketNote(TenantAwareModel):
         tag = "Internal" if self.is_internal else "Reply"
         return f"[{tag}] {self.body[:50]}"
 
-class Event(models.Model):
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+
+class Event(TenantAwareModel): # Swapped explicit models.Model for TenantAwareModel
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     assigned_to = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    category = models.CharField(max_length=50, default='Meeting') # Meeting, Call, Deadline
+    category = models.CharField(max_length=50, default='Meeting') 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __cl__(self):
+    def __str__(self): # Fixed typo: __cl__ -> __str__
         return self.title

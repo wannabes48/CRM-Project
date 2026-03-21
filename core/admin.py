@@ -5,9 +5,9 @@ from .models import Tenant, CustomUser, Contact, Activity, Deal, Ticket, TicketN
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('name', 'plan_name', 'subscription_status', 'created_at')
+    list_display = ('name', 'domain', 'industry', 'created_at')
     search_fields = ('name',)
-    list_filter = ('subscription_status', 'plan_name')
+    list_filter = ('industry',)
 
 
 @admin.register(CustomUser)
