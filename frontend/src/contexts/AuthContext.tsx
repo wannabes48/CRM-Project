@@ -70,6 +70,16 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+
+    if (error.response?.status === 403) {
+      const errorMessage = error.response.data.detail;
+      
+      // If it's our specific subscription error, force them to the billing page
+      if (errorMessage === "Your workspace subscription is inactive. Please update your billing details to regain access.") {
+        window.location.href = '/settings?tab=billing';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

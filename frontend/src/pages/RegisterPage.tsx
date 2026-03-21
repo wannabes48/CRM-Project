@@ -1,11 +1,11 @@
 import React, { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Building, User, ArrowRight, Loader2, Hexagon, Zap, BarChart3, ShieldCheck, CheckCircle2} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import api, { useAuth } from '../contexts/AuthContext';
 import { LayoutDashboard, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const [tenantName, setTenantName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -53,12 +53,17 @@ export default function RegisterPage() {
       });
       console.log('Registering payload:', { tenantName, username, email, password });
 
+      await login(email, password);
+
       setStatus('success');
-      
-      // Mock success and redirect to login
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+
+      const res = await api.post('/api/create-checkout-session');
+
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        throw new Error("Could not connect to payment gateway.");
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.non_field_errors?.[0] || 'Registration failed.');
     } finally {
@@ -98,7 +103,7 @@ export default function RegisterPage() {
                 Welcome aboard, {firstName}. We are setting up your environment.
               </p>
               <p className="text-saas-neon font-bold text-sm animate-pulse mt-6">
-                Redirecting to login...
+                Transferring to secure checkout...
               </p>
             </div>
           ) : (
@@ -188,6 +193,21 @@ export default function RegisterPage() {
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full bg-[#09090B] border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-saas-neon transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-3.5 text-gray-500" size={18} />
+                <input 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   className="w-full bg-[#09090B] border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-saas-neon transition-colors"

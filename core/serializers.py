@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant
+from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant, LoginActivity
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -114,3 +114,8 @@ class TenantSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = ['name', 'domain', 'industry']
+
+class LoginActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoginActivity
+        fields = ['id', 'ip_address', 'user_agent', 'status', 'created_at']

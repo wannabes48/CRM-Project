@@ -44,3 +44,26 @@ class IsSalesRep(BasePermission):
             and request.user.is_authenticated
             and request.user.role == 'Sales Rep'
         )
+
+class HasActiveSubscription(BasePermission):
+    """
+    Blocks users if their workspace subscription is canceled, past due, or missing.
+    """
+    # This is the exact error message React will receive if they are blocked
+    message = "Your workspace subscription is inactive. Please update your billing details to regain access."
+
+    def has_permission(self, request, view):
+        # 1. If they aren't logged in, let the standard IsAuthenticated class handle it
+        if not request.user or not request.user.is_authenticated:
+            return True 
+
+        # 2. Grab the subscription linked to the user's tenant
+        # (Using .first() because Subscription has a ForeignKey to Tenant)
+        subscription = request.user.tenant.subscription_set.first()
+        
+        # 3. If they don't have a subscription record at all, block them
+        if not subscription:
+            return False
+            
+        # 4. Only allow access if they are paying or on a free trial
+        return subscription.status in ['active', 'trialing']

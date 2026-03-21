@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck} from 'lucide-react';
+import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck, Monitor, Smartphone, Globe} from 'lucide-react';
 import api from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 type Tab = 'profile' | 'workspace' | 'security' | 'billing' | 'team' | 'notifications';
+
+interface LoginLog {
+  id: string;
+  ip_address: string;
+  user_agent: string;
+  status: string;
+  created_at: string;
+}
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
@@ -115,6 +123,46 @@ export default function SettingsPage() {
       setIsSaving(false);
       setTimeout(() => setMessage({ type: '', text: '' }), 4000);
     }
+  };
+
+  const [logs, setLogs] = useState<LoginLog[]>([]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await api.get('/api/login-activity/');
+        setLogs(res.data);
+      } catch (err) {
+        console.error("Failed to fetch activity logs", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
+
+  // Helper function to make User-Agents readable and pick an icon
+  const parseDevice = (userAgent: string) => {
+    const ua = userAgent.toLowerCase();
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+    let Icon = Globe;
+
+    // Detect OS
+    if (ua.includes('mac')) os = 'macOS';
+    else if (ua.includes('win')) os = 'Windows';
+    else if (ua.includes('linux')) os = 'Linux';
+    else if (ua.includes('iphone') || ua.includes('ipad')) { os = 'iOS'; Icon = Smartphone; }
+    else if (ua.includes('android')) { os = 'Android'; Icon = Smartphone; }
+    else Icon = Monitor;
+
+    // Detect Browser
+    if (ua.includes('chrome') && !ua.includes('edg')) browser = 'Chrome';
+    else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+    else if (ua.includes('firefox')) browser = 'Firefox';
+    else if (ua.includes('edg')) browser = 'Edge';
+
+    return { label: `${browser} on ${os}`, Icon };
   };
 
   const tabs = [
@@ -337,6 +385,50 @@ export default function SettingsPage() {
 
           {/* SECURITY TAB */}
           {activeTab === 'security' && (
+            <>
+              <div className="bg-white dark:bg-[#151516] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm mb-8">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/20">
+                <Shield className="text-emerald-600" size={20} />
+                <h3 className="font-bold text-gray-900 dark:text-white">Recent Logins</h3>
+              </div>
+              {loading ? (
+                <div className="p-12 flex justify-center">
+                  <Loader2 className="animate-spin text-gray-400" size={32} />
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">No login history found.</div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {logs.map((log) => {
+                    const { label, Icon } = parseDevice(log.user_agent);
+                    return (
+                      <div key={log.id} className="p-4 flex items-center justify-between p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/10 transition-colors">
+                        <div className="flex items-start gap-4">
+                          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl text-gray-600 dark:text-gray-400 mt-1 sm:mt-0">
+                            <Icon size={20} />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900 dark:text-white mb-1">
+                              {label}
+                              {log.status === 'Success' ? (
+                                <span className="ml-3 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 px-2 py-0.5 rounded-full">Success</span>
+                              ) : (
+                                <span className="ml-3 text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 px-2 py-0.5 rounded-full">Failed</span>
+                              )}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>IP: {log.ip_address || 'Unknown'}</span>
+                              <span className="hidden sm:inline">•</span>
+                              <span>{new Date(log.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                )}
+                </div>
             <form onSubmit={handlePasswordChange} className="p-8">
               <div className="mb-6">
                 <h2 className="text-xl font-bold text-black dark:text-white">Change Password</h2>
@@ -362,6 +454,7 @@ export default function SettingsPage() {
                 </button>
               </div>
             </form>
+            </>
           )}
 
           {/* NOTIFICATIONS TAB */}

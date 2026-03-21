@@ -12,21 +12,23 @@ from rest_framework.response import Response
 from django.db import transaction
 from .emails import send_welcome_email
 
-from .models import Tenant, CustomUser, Contact, Deal, Ticket
-from .serializers import ContactSerializer, DealSerializer, TicketSerializer, EventSerializer, TicketNoteSerializer
+from .models import Tenant, CustomUser, Contact, Deal, Ticket, Subscription, LoginActivity
+from .serializers import ContactSerializer, DealSerializer, TicketSerializer, EventSerializer, TicketNoteSerializer, LoginActivitySerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from rest_framework import generics
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, get_user_model
 from .serializers import UserProfileSerializer, TenantSettingsSerializer
+from .permissions import HasActiveSubscription
 
-stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', 'sk_test_your_key_here')
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY')
+User = get_user_model()
 
 # --- Explicit, Secure ViewSets ---
 class ContactViewSet(viewsets.ModelViewSet):
     serializer_class = ContactSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
 
     def get_queryset(self):
         user = self.request.user
@@ -43,7 +45,7 @@ class ContactViewSet(viewsets.ModelViewSet):
 
 class DealViewSet(viewsets.ModelViewSet):
     serializer_class = DealSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
 
     def get_queryset(self):
         user = self.request.user
@@ -84,43 +86,104 @@ class TicketNoteViewSet(viewsets.ModelViewSet):
 
 # --- Custom Auth & JWT Views ---
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+
     @classmethod
     def get_token(cls, user):
+        # Let SimpleJWT generate the default token
         token = super().get_token(user)
+
+        # Add custom claims
         token['username'] = user.username
         token['email'] = user.email
-        token['role'] = user.role
-        token['tenant_name'] = user.tenant.name if user.tenant else None
+
+        # THE FIX: Extract the string value from the ForeignKey objects!
+        if hasattr(user, 'role') and user.role:
+            token['role'] = user.role.name
+        else:
+            token['role'] = 'No Role'
+        
+        # Add the tenant details for frontend use
+        if hasattr(user, 'tenant') and user.tenant:
+            token['tenant_id'] = str(user.tenant.id)
+            token['tenant_name'] = user.tenant.name
+        else:
+            token['tenant_id'] = None
+            token['tenant_name'] = None
+            
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        # If we reach this line, authentication was successful! Let's log it.
+        request = self.context.get('request')
+        if request and self.user:
+            # Get the real IP address (handles reverse proxies like Nginx)
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+            
+            # Get the device/browser info
+            user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
+
+            # Save the log
+            LoginActivity.objects.create(
+                user=self.user,
+                ip_address=ip,
+                user_agent=user_agent,
+                status='Success'
+            )
+            
+        return data
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+class LoginActivityListView(generics.ListAPIView):
+    serializer_class = LoginActivitySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Return the 20 most recent logs for the currently logged-in user
+        return LoginActivity.objects.filter(user=self.request.user)[:20]
 
 # --- Registration & Dashboard Views ---
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_tenant(request):
     data = request.data
-    tenant_name, username, email, password = data.get('tenantName'), data.get('username'), data.get('email'), data.get('password')
-
-    if not all([tenant_name, username, email, password]):
-        return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if CustomUser.objects.filter(username=username).exists():
-        return Response({'error': 'Username is already taken'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        with transaction.atomic():
-            tenant = Tenant.objects.create(name=tenant_name)
-            user = CustomUser.objects.create_user(
-                username=username, email=email, password=password, tenant=tenant, role='Admin'
-            )
+        tenant = Tenant.objects.create(name=data['tenantName'])
+        
+        # 2. Create the User and assign the tenant immediately 
+        # (If we don't pass tenant=tenant here, the new TenantAwareModel will crash!)
+        user = User.objects.create_user(
+            username=data['username'],
+            email=data['email'],
+            password=data['password'],
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+            tenant=tenant 
+        )
 
-            send_welcome_email(user, tenant)
+        # 3. Initialize their Subscription state
+        # We start them as 'trialing' on the Free tier so they can access the dashboard
+        Subscription.objects.create(
+            tenant=tenant,
+            status='trialing',
+            plan_tier='Free'
+        )
 
-        return Response({'message': 'Workspace created successfully'}, status=status.HTTP_201_CREATED)
+        # 4. Fire off the welcome email
+        send_welcome_email(user, tenant)
+        
+        return Response({'message': 'Workspace created successfully.'}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        print("🚨 REGISTRATION CRASHED:", str(e))
+        return Response({'error': 'Internal Server Error. Check terminal.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -239,22 +302,22 @@ def change_password(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_checkout_session(request):
-    tenant = request.user.tenant
+    try :
+        tenant = request.user.tenant
     
-    # In a real app, you get these Price IDs from your Stripe Dashboard
-    price_id = 'price_1TD78FF640qNaOCiXDlN4KUk' # Replace with your actual Stripe Price ID
+         # In a real app, you get these Price IDs from your Stripe Dashboard
+        price_id = 'price_1TD78FF640qNaOCiXDlN4KUk' # Replace with your actual Stripe Price ID
     
-    try:
         checkout_session = stripe.checkout.Session.create(
-            client_reference_id=str(tenant.id), # Crucial: Tells the webhook WHICH tenant paid
-            customer_email=request.user.email,
             payment_method_types=['card'],
             line_items=[
                 {'price': price_id, 'quantity': 1},
             ],
             mode='subscription',
-            success_url='http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}',
+            success_url='http://localhost:5173/dashboard?session_id={CHECKOUT_SESSION_ID}',
             cancel_url='http://localhost:5173/pricing',
+            client_reference_id=str(tenant.id),
+            customer_email=request.user.email,
         )
         return Response({'url': checkout_session.url})
     except Exception as e:
@@ -262,13 +325,14 @@ def create_checkout_session(request):
 
 # 2. HANDLE STRIPE WEBHOOKS
 @csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', 'whsec_your_secret_here')
 
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
     except ValueError:
         return HttpResponse(status=400) # Invalid payload
     except stripe.error.SignatureVerificationError:
@@ -280,12 +344,14 @@ def stripe_webhook(request):
         
         # 1. Get the tenant ID we passed in earlier
         tenant_id = session.get('client_reference_id')
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
         
         # 2. Update the database to unlock the software
         if tenant_id:
-            tenant = Tenant.objects.get(id=tenant_id)
-            tenant.stripe_customer_id = session.get('customer')
-            tenant.stripe_subscription_id = session.get('subscription')
+            tenant, created = Tenant.objects.get_or_create(id=tenant_id)
+            tenant.stripe_customer_id = stripe_customer_id
+            tenant.stripe_subscription_id = stripe_subscription_id
             tenant.subscription_status = 'active'
             tenant.plan_tier = 'Professional'
             tenant.save()

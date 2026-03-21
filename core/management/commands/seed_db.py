@@ -1,78 +1,144 @@
 import random
+from datetime import timedelta
 from django.core.management.base import BaseCommand
-from faker import Faker
-from core.models import Tenant, CustomUser, Contact, Deal, Ticket
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.db import transaction
+
+from core.models import (
+    Tenant, Subscription, Role, Contact, Pipeline, 
+    Deal, Ticket, Activity, TicketNote, Event
+)
+
+User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Seeds the database step-by-step to prevent total rollbacks.'
+    help = 'Seeds the database with sample CRM data and backfills missing subscriptions.'
 
+    @transaction.atomic
     def handle(self, *args, **kwargs):
-        fake = Faker()
-        self.stdout.write('Starting database seed for ACME CORP...')
+        self.stdout.write("Starting database seeding process...")
 
-        # 1. Create or Get the Workspace
-        tenant, _ = Tenant.objects.get_or_create(name="ACME CORP")
-        
-        # 2. Create or Get the Admin User
-        admin_user, user_created = CustomUser.objects.get_or_create(
-            username="dansiro",
-            defaults={'email': 'dansiro@acmecorp.com', 'tenant': tenant, 'role': 'Admin', 'is_staff': True, 'is_superuser': True}
-        )
-        if user_created:
-            admin_user.set_password('5848daniel')
-            admin_user.save()
+        tenants = Tenant.objects.all()
+        if not tenants.exists():
+            self.stdout.write(self.style.ERROR("No workspaces (Tenants) found. Please register an account via the UI first!"))
+            return
 
-        # 3. Generate Contacts
-        contacts = []
-        try:
-            for _ in range(30):
-                c = Contact.objects.create(
-                    tenant=tenant, 
-                    assigned_to=admin_user, 
-                    first_name=fake.first_name(), 
-                    last_name=fake.last_name(), 
-                    email=fake.company_email(), 
-                    phone=fake.phone_number()[:20], # Truncate just in case Faker generates a long extension
-                    company=fake.company()
+        # Sample data pools for realistic generation
+        first_names = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Jamie", "Quinn"]
+        last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis"]
+        companies = ["Acme Corp", "Globex", "Initech", "Soylent", "Massive Dynamic", "Stark Ind."]
+        deal_titles = ["Q3 Software License", "Enterprise SLA Upgrade", "Consulting Retainer", "Hardware Bulk Order"]
+        ticket_subjects = ["Cannot login to portal", "Billing issue on last invoice", "Feature request: Dark Mode", "API rate limit exceeded"]
+
+        for tenant in tenants:
+            self.stdout.write(f"\n--- Processing Workspace: {tenant.name} ---")
+
+            # 1. Backfill Subscription
+            sub, created = Subscription.objects.get_or_create(
+                tenant=tenant,
+                defaults={
+                    'status': 'trialing',
+                    'plan_tier': 'Free',
+                    'current_period_end': timezone.now() + timedelta(days=14)
+                }
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f"✔ Created Free Trial Subscription for {tenant.name}"))
+
+            # 2. Create standard Roles
+            admin_role, _ = Role.objects.get_or_create(tenant=tenant, name="Admin", defaults={'description': "Full system access"})
+            sales_role, _ = Role.objects.get_or_create(tenant=tenant, name="Sales Rep", defaults={'description': "Can manage deals and contacts"})
+            
+            # Ensure the first user is assigned the Admin role
+            first_user = User.objects.filter(tenant=tenant).first()
+            if first_user and not first_user.role:
+                first_user.role = admin_role
+                first_user.save()
+                self.stdout.write(self.style.SUCCESS(f"✔ Assigned Admin role to user {first_user.email}"))
+
+            if not first_user:
+                self.stdout.write(self.style.WARNING(f"⚠ No users found in {tenant.name}. Skipping data generation for this workspace."))
+                continue
+
+            # 3. Create a Sales Pipeline
+            pipeline, _ = Pipeline.objects.get_or_create(
+                tenant=tenant, 
+                name="Standard Sales Pipeline",
+                defaults={'description': "Default 4-stage sales process"}
+            )
+
+            # 4. Generate Contacts & Related Data
+            self.stdout.write("Generating Contacts, Deals, Tickets, and Activities...")
+            
+            for i in range(5): # Generate 5 sample contacts per tenant
+                fname = random.choice(first_names)
+                lname = random.choice(last_names)
+                
+                contact = Contact.objects.create(
+                    tenant=tenant,
+                    assigned_to=first_user,
+                    first_name=fname,
+                    last_name=lname,
+                    email=f"{fname.lower()}.{lname.lower()}@example.com",
+                    phone=f"555-01{random.randint(10, 99)}",
+                    company=random.choice(companies),
+                    tags=["Enterprise", "Q4 Prospect", "Hot Lead"][:random.randint(1, 3)]
                 )
-                contacts.append(c)
-            self.stdout.write(self.style.SUCCESS(f'Successfully created 30 Contacts.'))
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Failed during Contacts: {str(e)}'))
-            return # Stop here if contacts fail, because Deals need Contacts!
 
-        # 4. Generate Deals
-        try:
-            stages = ['Lead', 'Qualified', 'Proposal', 'Won', 'Lost']
-            for _ in range(50):
-                Deal.objects.create(
-                    tenant=tenant, 
-                    contact=random.choice(contacts), 
-                    assigned_to=admin_user, 
-                    title=f"{fake.bs().title()} Deal"[:200], # Prevent too-long titles
-                    amount=round(random.uniform(1000.00, 75000.00), 2), 
-                    stage=random.choice(stages), 
-                    probability=random.choice([10, 25, 50, 75, 90, 100])
-                )
-            self.stdout.write(self.style.SUCCESS(f'Successfully created 50 Deals.'))
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Failed during Deals: {str(e)}'))
+                # Add 1-3 Activities to the timeline
+                for _ in range(random.randint(1, 3)):
+                    Activity.objects.create(
+                        tenant=tenant,
+                        contact=contact,
+                        author=first_user,
+                        activity_type=random.choice(['call', 'email', 'meeting', 'note']),
+                        description=f"Discussed requirements for the upcoming {random.choice(['quarter', 'project', 'migration'])}."
+                    )
 
-        # 5. Generate Tickets
-        try:
-            statuses, priorities = ['Open', 'Pending', 'Resolved'], ['Low', 'Medium', 'High']
-            for _ in range(15):
-                Ticket.objects.create(
-                    tenant=tenant, 
-                    contact=random.choice(contacts), 
-                    assigned_to=admin_user, 
-                    subject=fake.sentence(nb_words=6)[:200], 
-                    description=fake.paragraph(nb_sentences=3), 
-                    status=random.choice(statuses), 
-                    priority=random.choice(priorities)
-                )
-            self.stdout.write(self.style.SUCCESS(f'Successfully created 15 Tickets.'))
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Failed during Tickets: {str(e)}'))
+                # Add a Deal 70% of the time
+                if random.random() > 0.3:
+                    Deal.objects.create(
+                        tenant=tenant,
+                        pipeline=pipeline,
+                        contact=contact,
+                        assigned_to=first_user,
+                        title=f"{contact.company} - {random.choice(deal_titles)}",
+                        amount=random.randint(1000, 50000),
+                        stage=random.choice(['Lead', 'Qualified', 'Proposal', 'Won']),
+                        probability=random.choice([10, 25, 50, 75, 90])
+                    )
 
-        self.stdout.write(self.style.SUCCESS('Seeding Process Complete!'))
+                # Add a Ticket 50% of the time
+                if random.random() > 0.5:
+                    ticket = Ticket.objects.create(
+                        tenant=tenant,
+                        contact=contact,
+                        assigned_to=first_user,
+                        subject=random.choice(ticket_subjects),
+                        description="Customer reported this issue earlier today. Needs urgent review.",
+                        status=random.choice(['Open', 'Pending', 'Resolved']),
+                        priority=random.choice(['Low', 'Medium', 'High'])
+                    )
+                    # Add a note to the ticket
+                    TicketNote.objects.create(
+                        tenant=tenant,
+                        ticket=ticket,
+                        author=first_user,
+                        body="I have reached out to the engineering team for an ETA.",
+                        is_internal=True
+                    )
+
+            # 5. Create some Calendar Events
+            Event.objects.create(
+                tenant=tenant,
+                assigned_to=first_user,
+                title="Q3 Strategy Planning",
+                start_time=timezone.now() + timedelta(days=1),
+                end_time=timezone.now() + timedelta(days=1, hours=2),
+                category="Meeting"
+            )
+
+            self.stdout.write(self.style.SUCCESS(f"✔ Successfully populated data for {tenant.name}"))
+
+        self.stdout.write(self.style.SUCCESS("\n🎉 Database seeding complete!"))

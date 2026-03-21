@@ -239,3 +239,18 @@ class Event(TenantAwareModel): # Swapped explicit models.Model for TenantAwareMo
 
     def __str__(self): # Fixed typo: __cl__ -> __str__
         return self.title
+
+class LoginActivity(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Note: Linked directly to the User, not the Tenant, as this is personal security data
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='login_logs')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=50, default='Success') # 'Success' or 'Failed'
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at'] # Newest logs first
+
+    def __str__(self):
+        return f"{self.user.username} - {self.ip_address} - {self.status}"

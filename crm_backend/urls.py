@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from core.views import (
-    register_tenant, dashboard_summary, CustomTokenObtainPairView,
+    register_tenant, dashboard_summary, CustomTokenObtainPairView, LoginActivityListView,
     ContactViewSet, DealViewSet, TicketViewSet, global_search, EventViewSet,
     UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet, 
     create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status
@@ -18,6 +18,7 @@ router.register(r'deals', DealViewSet, basename='deal')
 router.register(r'tickets', TicketViewSet, basename='ticket')
 router.register(r'events', EventViewSet, basename='event')
 router.register(r'ticket-notes', TicketNoteViewSet, basename='ticket-note')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,7 +34,8 @@ urlpatterns = [
     path('api/tenant/', TenantSettingsView.as_view(), name='tenant_settings'),
     path('api/users/change-password/', change_password, name='change_password'),
     path('api/create-checkout-session/', create_checkout_session),
-    path('api/webhook/stripe/', stripe_webhook),
+    path('api/webhook/stripe/', stripe_webhook, name='stripe_webhook'),
     path('api/create-portal-session/', create_customer_portal_session, name='billing_portal'),
     path('api/subscription-status/', get_subscription_status, name='subscription_status'),
+    path('api/login-activity/', LoginActivityListView.as_view(), name='login_activity'),
 ]
