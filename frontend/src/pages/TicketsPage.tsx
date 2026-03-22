@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, MoreHorizontal, Ticket as TicketIcon, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import api from '../contexts/AuthContext';
 import TicketDetailModal from '../components/modals/TicketDetailModal';

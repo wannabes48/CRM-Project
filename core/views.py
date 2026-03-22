@@ -8,14 +8,18 @@ from rest_framework.response import Response
 from django.db.models import Sum, Count, Q, Avg
 from django.db.models.functions import TruncMonth
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
 from .emails import send_welcome_email
 
-from .models import Tenant, CustomUser, Contact, Deal, Ticket, Subscription, LoginActivity
-from .serializers import ContactSerializer, DealSerializer, TicketSerializer, EventSerializer, TicketNoteSerializer, LoginActivitySerializer
+from .models import Tenant, CustomUser, Contact, Deal, Ticket, Subscription, LoginActivity, Notification
+from .serializers import (
+    ContactSerializer, DealSerializer, TicketSerializer, 
+    EventSerializer, TicketNoteSerializer, LoginActivitySerializer,
+    NotificationSerializer
+)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -501,3 +505,15 @@ def export_contacts_csv(request):
         ])
 
     return response
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-is_read', '-created_at')
+
+    @action(detail=False, methods=['post'])
+    def mark_all_as_read(self, request):
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'notifications marked as read'})

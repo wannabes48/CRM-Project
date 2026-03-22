@@ -59,3 +59,29 @@ def send_password_reset_email(user, reset_token):
     except Exception as e:
         print(f"Error sending password reset to {user.email}: {e}")
         return False
+
+def send_notification_email(user, title, message, link=None):
+    subject = f'Notification: {title}'
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notifications@xentrix.com')
+    to_email = [user.email]
+
+    context = {
+        'username': user.username,
+        'title': title,
+        'message': message,
+        'action_url': f"http://localhost:5173{link}" if link else "http://localhost:5173/dashboard",
+    }
+
+    # We'll use a generic notification template
+    html_content = render_to_string('emails/notification.html', context)
+    text_content = strip_tags(html_content)
+
+    msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+    msg.attach_alternative(html_content, "text/html")
+    
+    try:
+        msg.send()
+        return True
+    except Exception as e:
+        print(f"Error sending notification email to {user.email}: {e}")
+        return False

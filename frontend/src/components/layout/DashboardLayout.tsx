@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Moon, Sun, Bell, Globe, Search, Menu, LayoutDashboard, Users, Briefcase, Ticket as TicketIcon, Phone, Settings, HelpCircle, CalendarIcon, BarChart3, LogOut } from 'lucide-react';
+import { Moon, Sun, Globe, Search, Menu, LayoutDashboard, Users, Briefcase, Ticket as TicketIcon, Phone, Settings, HelpCircle, CalendarIcon, BarChart3, LogOut } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 export default function DashboardLayout() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   
   const location = useLocation();
@@ -194,9 +194,7 @@ export default function DashboardLayout() {
             <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-saas-surface text-gray-400 hover:text-saas-neon transition-all">
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)} className={`p-2 rounded-full transition-all ${isRightSidebarOpen ? 'bg-saas-neon/20 text-saas-neon' : 'hover:bg-gray-200 dark:hover:bg-saas-surface text-gray-400 hover:text-saas-neon'}`}>
-              <Bell size={20} />
-            </button>
+            <NotificationBell />
             <Globe size={20} className="text-gray-400 hover:text-saas-neon cursor-pointer hidden sm:block" />
           </div>
         </header>
@@ -206,25 +204,6 @@ export default function DashboardLayout() {
           <Outlet /> 
         </main>
       </div>
-
-      {/* RIGHT SIDEBAR (Notifications) */}
-      <aside className={`bg-white dark:bg-saas-bg border-l border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out shrink-0 overflow-hidden flex flex-col ${isRightSidebarOpen ? 'w-80 opacity-100 px-6 py-8' : 'w-0 opacity-0 px-0 py-8'}`}>
-        <div className="w-64">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-bold text-lg text-black dark:text-white">Notifications</h3>
-            <span className="bg-saas-neon text-black text-xs font-bold px-2 py-0.5 rounded-full">1</span>
-          </div>
-          <div className="space-y-6 mb-10">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-saas-neon/20 flex items-center justify-center text-saas-neon shrink-0"><Bell size={16}/></div>
-              <div>
-                <p className="text-sm font-medium text-black dark:text-white">Workspace Initialized</p>
-                <p className="text-xs text-gray-500 mt-0.5">System • Just now</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
 
     </div>
   );

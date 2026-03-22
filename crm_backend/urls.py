@@ -9,7 +9,8 @@ from core.views import (
     register_tenant, dashboard_summary, CustomTokenObtainPairView, LoginActivityListView,
     ContactViewSet, DealViewSet, TicketViewSet, global_search, EventViewSet,
     UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet, analytics_dashboard,
-    create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status, TenantSettingsView, export_contacts_csv
+    create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status, 
+    TenantSettingsView, export_contacts_csv, NotificationViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'deals', DealViewSet, basename='deal')
 router.register(r'tickets', TicketViewSet, basename='ticket')
 router.register(r'events', EventViewSet, basename='event')
 router.register(r'ticket-notes', TicketNoteViewSet, basename='ticket-note')
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 
 urlpatterns = [

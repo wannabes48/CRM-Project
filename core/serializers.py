@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant, LoginActivity
+from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant, LoginActivity, Notification
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -119,3 +119,9 @@ class LoginActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = LoginActivity
         fields = ['id', 'ip_address', 'user_agent', 'status', 'created_at']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ('id', 'title', 'message', 'link', 'is_read', 'created_at')
+        read_only_fields = ('id', 'created_at')
