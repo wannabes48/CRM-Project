@@ -79,7 +79,7 @@ api.interceptors.response.use(
         window.location.href = '/settings?tab=billing';
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -99,15 +99,31 @@ interface AuthContextType {
   logout: () => void;
   register: (userData: any) => Promise<void>;
   loading: boolean;
+  tenantSettings: any
 }
 
 // 3. Initialize the Context
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [tenantSettings, setTenantSettings] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+
+  const fetchTenantSettings = async () => {
+    try {
+      const res = await api.get('tenant/settings/');
+      setTenantSettings(res.data);
+      
+      // 🟢 MAGIC HAPPENS HERE: Inject the custom brand color into the CSS!
+      if (res.data.brand_color) {
+        document.documentElement.style.setProperty('--brand-color', res.data.brand_color);
+      }
+    } catch (err) {
+      console.error("Could not load tenant settings", err);
+    }
+  };
 
   // Check for existing token on initial load
   useEffect(() => {
@@ -128,6 +144,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
           logout();
         }
+
+        fetchTenantSettings();
       }
       setLoading(false);
     };
@@ -155,6 +173,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     const decodedUser = jwtDecode<User>(response.data.access);
     setUser(decodedUser);
+    
+    // Fetch tenant settings after successful login
+    await fetchTenantSettings();
   };
 
   const logout = () => {
@@ -166,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, loading, tenantSettings }}>
       {!loading && children}
     </AuthContext.Provider>
   );

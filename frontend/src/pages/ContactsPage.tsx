@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MoreHorizontal, Mail, Phone, Building } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Mail, Phone, Building, Download, Loader2 } from 'lucide-react';
 import NewContactModal from '../components/modals/NewContactModal';
 import api from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -18,6 +18,7 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchContacts = async () => {
     try {
@@ -30,6 +31,39 @@ export default function ContactsPage() {
       console.error("Error fetching contacts:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      // 1. Tell Axios we are expecting a raw file, not JSON
+      const response = await api.get('/contacts/export/', {
+        responseType: 'blob',
+      });
+
+      // 2. Create a temporary URL for the downloaded data
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      // 3. Create an invisible anchor tag
+      const link = document.createElement('a');
+      link.href = url;
+
+      // 4. Force the download with a filename
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `Xentrix_Contacts_${dateStr}.csv`);
+
+      // 5. Append, click, and cleanup
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // Free up memory
+
+    } catch (error) {
+      console.error("Failed to export contacts:", error);
+      alert("There was an error exporting your contacts. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
   };
   React.useEffect(() => {
@@ -55,12 +89,20 @@ export default function ContactsPage() {
         <div className="flex gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search contacts..." 
+            <input
+              type="text"
+              placeholder="Search contacts..."
               className="w-full bg-white dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-xl py-2 pl-10 pr-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white transition-colors"
             />
           </div>
+          <button
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            className="flex items-center gap-2 bg-white dark:bg-saas-surface hover:bg-gray-50 dark:hover:bg-saas-surfacehover border border-gray-200 dark:border-gray-800 text-black dark:text-white font-bold py-2 px-4 rounded-xl transition-colors shadow-sm disabled:opacity-50 shrink-0"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
           <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(178,255,77,0.3)] shrink-0">
             <Plus size={18} strokeWidth={3} /> Add
           </button>
@@ -123,11 +165,11 @@ export default function ContactsPage() {
           </table>
         </div>
       </div>
-      
-      <NewContactModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchContacts} 
+
+      <NewContactModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchContacts}
       />
     </div>
   );

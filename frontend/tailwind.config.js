@@ -13,8 +13,8 @@ export default {
           bg: '#161618',       // The deepest background
           surface: '#1E1E20',  // The card backgrounds
           surfaceHover: '#2A2A2D',
-          neon: '#B2FF4D',     // That bright accent green
-          neonHover: '#9EE042',
+          neon: 'var(--brand-color, #B2FF4D)',     // That bright accent green
+          neonHover: 'var(--brand-color, #B2FF4D)',
           textMuted: '#8A8A8E',
           textMain: '#FFFFFF',
         }

@@ -8,8 +8,8 @@ from rest_framework_simplejwt.views import (
 from core.views import (
     register_tenant, dashboard_summary, CustomTokenObtainPairView, LoginActivityListView,
     ContactViewSet, DealViewSet, TicketViewSet, global_search, EventViewSet,
-    UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet, 
-    create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status
+    UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet, analytics_dashboard,
+    create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status, TenantSettingsView, export_contacts_csv
 )
 
 router = DefaultRouter()
@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/dashboard/', dashboard_summary, name='dashboard_summary'),
     path('api/search/', global_search, name='global_search'),
+    path('api/contacts/export/', export_contacts_csv, name='export_contacts_csv'),
     path('api/', include(router.urls)),
     path('api/users/me/', UserProfileView.as_view(), name='user_profile'),
     path('api/tenant/', TenantSettingsView.as_view(), name='tenant_settings'),
@@ -38,4 +39,7 @@ urlpatterns = [
     path('api/create-portal-session/', create_customer_portal_session, name='billing_portal'),
     path('api/subscription-status/', get_subscription_status, name='subscription_status'),
     path('api/login-activity/', LoginActivityListView.as_view(), name='login_activity'),
+    path('api/analytics/', analytics_dashboard, name='analytics_dashboard'),
+    path('api/tenant/settings/', TenantSettingsView.as_view(), name='tenant_settings'),
+    
 ]

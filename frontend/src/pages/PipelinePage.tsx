@@ -35,7 +35,8 @@ export default function PipelinePage() {
     const fetchDeals = async () => {
       try {
         const response = await api.get('deals/');
-        setDeals(response.data);
+        const actualData = response.data.results ? response.data.results : response.data;
+        setDeals(actualData);
       } catch (error) {
         console.error("Error fetching deals:", error);
       } finally {

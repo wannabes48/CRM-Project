@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+import pytz
 
 class Tenant(models.Model):
     """The core organization/workspace table."""
@@ -8,6 +9,18 @@ class Tenant(models.Model):
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=255, blank=True, null=True)
     industry = models.CharField(max_length=100, default='Technology')
+
+    subdomain = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    custom_domain = models.CharField(max_length=255, unique=True, blank=True, null=True)
+    
+    # Settings
+    timezone = models.CharField(max_length=50, default='UTC', choices=[(tz, tz) for tz in pytz.all_timezones])
+    currency = models.CharField(max_length=3, default='USD') # e.g., USD, EUR, GBP
+    
+    # Branding
+    brand_color = models.CharField(max_length=7, default='#B2FF4D') # Defaults to your saas-neon
+    logo_url = models.URLField(max_length=500, blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

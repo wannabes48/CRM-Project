@@ -113,7 +113,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class TenantSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = ['name', 'domain', 'industry']
+        fields = ['id', 'name', 'domain', 'subdomain','industry', 'timezone', 'currency', 'brand_color', 'logo_url']
 
 class LoginActivitySerializer(serializers.ModelSerializer):
     class Meta:

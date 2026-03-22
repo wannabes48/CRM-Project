@@ -1,10 +1,12 @@
 import stripe
+import csv
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from rest_framework.response import Response
 
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Avg
+from django.db.models.functions import TruncMonth
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -222,40 +224,55 @@ def dashboard_summary(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def global_search(request):
-    query = request.query_params.get('q', '').strip()
-    
-    # If the search is empty, return empty lists to save database power
-    if not query:
-        return Response({'contacts': [], 'deals': [], 'tickets': []})
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return Response([]) # Don't search for single letters
 
     tenant = request.user.tenant
+    results = []
 
     # 1. Search Contacts (by name, email, or company)
     contacts = Contact.objects.filter(
         Q(tenant=tenant) & (
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query) |
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query) | 
             Q(email__icontains=query) |
             Q(company__icontains=query)
         )
-    )[:5] # Limit to top 5 results to keep the UI clean
+    )[:5] # Limit to top 5 matches per category for speed
+
+    for c in contacts:
+        results.append({
+            'id': str(c.id),
+            'type': 'Contact',
+            'title': f"{c.first_name} {c.last_name}",
+            'subtitle': c.company or c.email,
+            'url': f"/contacts/{c.id}"
+        })
 
     # 2. Search Deals (by title)
-    deals = Deal.objects.filter(
-        Q(tenant=tenant) & Q(title__icontains=query)
-    )[:5]
+    deals = Deal.objects.filter(tenant=tenant, title__icontains=query)[:5]
+    for d in deals:
+        results.append({
+            'id': str(d.id),
+            'type': 'Deal',
+            'title': d.title,
+            'subtitle': f"${d.amount} - {d.stage}",
+            'url': f"/deals/{d.id}" # Or wherever your deal modal lives
+        })
 
     # 3. Search Tickets (by subject)
-    tickets = Ticket.objects.filter(
-        Q(tenant=tenant) & Q(subject__icontains=query)
-    )[:5]
+    tickets = Ticket.objects.filter(tenant=tenant, subject__icontains=query)[:5]
+    for t in tickets:
+        results.append({
+            'id': str(t.id),
+            'type': 'Ticket',
+            'title': t.subject,
+            'subtitle': f"Status: {t.status}",
+            'url': f"/tickets/{t.id}"
+        })
 
-    # Format the response so the frontend can easily display it
-    return Response({
-        'contacts': [{'id': str(c.id), 'name': f"{c.first_name} {c.last_name}", 'desc': c.email} for c in contacts],
-        'deals': [{'id': str(d.id), 'name': d.title, 'desc': f"${d.amount} • {d.stage}"} for d in deals],
-        'tickets': [{'id': str(t.id), 'name': t.subject, 'desc': f"{t.status} • {t.priority}"} for t in tickets],
-    })
+    return Response(results)
 
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
@@ -277,7 +294,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 class TenantSettingsView(generics.RetrieveUpdateAPIView):
     serializer_class = TenantSettingsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasActiveSubscription]
 
     def get_object(self):
         return self.request.user.tenant # Always return the user's specific workspace
@@ -402,3 +419,85 @@ def get_subscription_status(request):
         })
     except Exception as e:
         return Response({'error': 'Could not fetch subscription details.'}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Add your HasActiveSubscription here if desired!
+def analytics_dashboard(request):
+    tenant = request.user.tenant
+    
+    # 1. Calculate Active Contacts
+    contacts_count = Contact.objects.filter(tenant=tenant).count()
+    
+    # 2. Calculate Deal Metrics
+    deals = Deal.objects.filter(tenant=tenant)
+    total_deals = deals.count()
+    
+    # We only count revenue from deals marked as 'Won'
+    won_deals = deals.filter(stage='Won')
+    won_count = won_deals.count()
+    
+    avg_deal_size = deals.aggregate(Avg('amount'))['amount__avg'] or 0
+    win_ratio = int((won_count / total_deals * 100)) if total_deals > 0 else 0
+    
+    # 3. Calculate Monthly Revenue for the Bar Chart
+    monthly_revenue = (
+        won_deals.annotate(month_trunc=TruncMonth('created_at'))
+        .values('month_trunc')
+        .annotate(revenue=Sum('amount'))
+        .order_by('month_trunc')
+    )
+    
+    chart_data = [
+        {
+            "month": item['month_trunc'].strftime('%b'), # Formats date to 'Jan', 'Feb', etc.
+            "revenue": float(item['revenue'])
+        } 
+        for item in monthly_revenue
+    ]
+
+    # Fallback if they have no won deals yet
+    if not chart_data:
+        chart_data = [{"month": "No Data", "revenue": 0}]
+    
+    return Response({
+        "kpis": {
+            "avg_deal_size": f"${avg_deal_size:,.0f}",
+            "win_ratio": f"{win_ratio}%",
+            "active_contacts": f"{contacts_count:,}",
+            "total_won": won_count
+        },
+        "chart_data": chart_data
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Add HasActiveSubscription if you want to gate this feature!
+def export_contacts_csv(request):
+    # 1. Set up the HTTP response to tell the browser "This is a downloadable file"
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="contacts_export.csv"'
+
+    # 2. Create a CSV writer attached to the response
+    writer = csv.writer(response)
+    
+    # 3. Write the Header Row
+    writer.writerow(['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Tags', 'Date Added'])
+
+    # 4. Fetch the data for this specific tenant
+    contacts = Contact.objects.filter(tenant=request.user.tenant).order_by('-created_at')
+
+    # 5. Loop through and write each row
+    for contact in contacts:
+        # Join the JSON array of tags into a single comma-separated string
+        tags_string = ", ".join(contact.tags) if isinstance(contact.tags, list) else ""
+        
+        writer.writerow([
+            contact.first_name,
+            contact.last_name,
+            contact.email or "",
+            contact.phone or "",
+            contact.company or "",
+            tags_string,
+            contact.created_at.strftime('%Y-%m-%d %H:%M') # Format the date nicely
+        ])
+
+    return response
