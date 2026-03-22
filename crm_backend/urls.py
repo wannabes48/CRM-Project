@@ -10,7 +10,7 @@ from core.views import (
     ContactViewSet, DealViewSet, TicketViewSet, global_search, EventViewSet,
     UserProfileView, TenantSettingsView, change_password, TicketNoteViewSet, analytics_dashboard,
     create_checkout_session, stripe_webhook, create_customer_portal_session, get_subscription_status, 
-    TenantSettingsView, export_contacts_csv, NotificationViewSet
+    TenantSettingsView, export_contacts_csv, NotificationViewSet, logout_view
 )
 
 router = DefaultRouter()
@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/subscription-status/', get_subscription_status, name='subscription_status'),
     path('api/login-activity/', LoginActivityListView.as_view(), name='login_activity'),
     path('api/analytics/', analytics_dashboard, name='analytics_dashboard'),
+    path('api/logout/', logout_view, name='logout'),
     path('api/tenant/settings/', TenantSettingsView.as_view(), name='tenant_settings'),
     
 ]

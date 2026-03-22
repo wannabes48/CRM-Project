@@ -96,7 +96,7 @@ interface User {
 interface AuthContextType {
   user: any;
   login: (identifier: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (userData: any) => Promise<void>;
   loading: boolean;
   tenantSettings: any
@@ -178,12 +178,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await fetchTenantSettings();
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    delete api.defaults.headers.common['Authorization'];
-    setUser(null);
-    navigate('/login');
+  const logout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        await api.post('logout/', { refresh: refreshToken });
+      }
+    } catch (error) {
+      console.error("Backend logout failed:", error);
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      navigate('/login');
+    }
   };
 
   return (

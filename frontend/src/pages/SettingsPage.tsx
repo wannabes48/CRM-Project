@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck, Monitor, Smartphone, Globe} from 'lucide-react';
+import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck, Monitor, Smartphone, Globe, Rocket} from 'lucide-react';
 import api from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -36,6 +36,26 @@ export default function SettingsPage() {
       alert(err.response?.data?.error || "Could not load billing portal.");
     } finally {
       setLoading(false);
+      setIsRedirecting(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    setIsRedirecting(true);
+    try {
+      const res = await api.post('create-checkout-session/');
+      
+      // Redirect to the Stripe Checkout page
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error || "Could not start checkout session.");
+    } finally {
+      setLoading(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -130,8 +150,9 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await api.get('/api/login-activity/');
-        setLogs(res.data);
+        const res = await api.get('login-activity/');
+        const data = res.data.results ? res.data.results : res.data;
+        setLogs(data);
       } catch (err) {
         console.error("Failed to fetch activity logs", err);
       } finally {
@@ -353,17 +374,31 @@ export default function SettingsPage() {
                 </p>
 
                 <div className="flex justify-start">
-                  <button 
-                    onClick={handleManageBilling}
-                    disabled={isRedirecting} 
-                    className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50"
-                  >
-                    {isRedirecting ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <>Open Billing Portal <ExternalLink size={18} /></>
-                    )}
-                  </button>
+                  {subscription.plan_tier === 'Free' ? (
+                    <button 
+                      onClick={handleUpgrade}
+                      disabled={isRedirecting} 
+                      className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(178,255,77,0.4)] disabled:opacity-50 group"
+                    >
+                      {isRedirecting ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        <>Upgrade to Professional <Rocket size={18} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></>
+                      )}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleManageBilling}
+                      disabled={isRedirecting} 
+                      className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50"
+                    >
+                      {isRedirecting ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        <>Open Billing Portal <ExternalLink size={18} /></>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
+import LogoutConfirmModal from '../modals/LogoutConfirmModal';
 
 export default function DashboardLayout() {
   const { theme, toggleTheme } = useTheme();
@@ -29,6 +30,8 @@ export default function DashboardLayout() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState({ contacts: [], deals: [], tickets: [] });
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown if user clicks outside of it
@@ -168,13 +171,25 @@ export default function DashboardLayout() {
           {isLeftSidebarOpen && <div className="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Settings</div>}
           <nav className="space-y-2">
             <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" isOpen={isLeftSidebarOpen} />
-            <button onClick={logout} className={`w-full flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium ${!isLeftSidebarOpen && 'justify-center'}`}>
+            <button onClick={() => setIsLogoutModalOpen(true)} className={`w-full flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium ${!isLeftSidebarOpen && 'justify-center'}`}>
               <div className="shrink-0"><LogOut size={20} /></div>
               {isLeftSidebarOpen && <span className="ml-3 text-sm">Log Out</span>}
             </button>
           </nav>
         </div>
       </aside>
+
+      <LogoutConfirmModal 
+        isOpen={isLogoutModalOpen} 
+        onClose={() => setIsLogoutModalOpen(false)} 
+        onConfirm={async () => {
+          setIsLoggingOut(true);
+          await logout();
+          setIsLoggingOut(false);
+          setIsLogoutModalOpen(false);
+        }}
+        loading={isLoggingOut}
+      />
 
       {/* CENTER MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0">

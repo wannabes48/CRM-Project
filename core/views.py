@@ -22,6 +22,7 @@ from .serializers import (
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from rest_framework import generics
 from django.contrib.auth import update_session_auth_hash, get_user_model
@@ -225,6 +226,17 @@ def dashboard_summary(request):
         'customers': customers_data
     })
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    try:
+        refresh_token = request.data.get("refresh")
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({"message": "Successfully logged out"}, status=status.HTTP_200_OK)
+    except Exception:
+        return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def global_search(request):
@@ -233,7 +245,11 @@ def global_search(request):
         return Response([]) # Don't search for single letters
 
     tenant = request.user.tenant
-    results = []
+    results = {
+        'contacts': [],
+        'deals': [],
+        'tickets': []
+    }
 
     # 1. Search Contacts (by name, email, or company)
     contacts = Contact.objects.filter(
@@ -246,33 +262,33 @@ def global_search(request):
     )[:5] # Limit to top 5 matches per category for speed
 
     for c in contacts:
-        results.append({
+        results['contacts'].append({
             'id': str(c.id),
             'type': 'Contact',
-            'title': f"{c.first_name} {c.last_name}",
-            'subtitle': c.company or c.email,
+            'name': f"{c.first_name} {c.last_name}",
+            'desc': c.company or c.email,
             'url': f"/contacts/{c.id}"
         })
 
     # 2. Search Deals (by title)
     deals = Deal.objects.filter(tenant=tenant, title__icontains=query)[:5]
     for d in deals:
-        results.append({
+        results['deals'].append({
             'id': str(d.id),
             'type': 'Deal',
-            'title': d.title,
-            'subtitle': f"${d.amount} - {d.stage}",
-            'url': f"/deals/{d.id}" # Or wherever your deal modal lives
+            'name': d.title,
+            'desc': f"${d.amount} - {d.stage}",
+            'url': f"/deals/{d.id}"
         })
 
     # 3. Search Tickets (by subject)
     tickets = Ticket.objects.filter(tenant=tenant, subject__icontains=query)[:5]
     for t in tickets:
-        results.append({
+        results['tickets'].append({
             'id': str(t.id),
             'type': 'Ticket',
-            'title': t.subject,
-            'subtitle': f"Status: {t.status}",
+            'name': t.subject,
+            'desc': f"Status: {t.status}",
             'url': f"/tickets/{t.id}"
         })
 
@@ -368,23 +384,24 @@ def stripe_webhook(request):
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
         
-        # 2. Update the database to unlock the software
+        # 2. Update the Subscription database to unlock the software
         if tenant_id:
-            tenant, created = Tenant.objects.get_or_create(id=tenant_id)
-            tenant.stripe_customer_id = stripe_customer_id
-            tenant.stripe_subscription_id = stripe_subscription_id
-            tenant.subscription_status = 'active'
-            tenant.plan_tier = 'Professional'
-            tenant.save()
+            tenant = Tenant.objects.get(id=tenant_id)
+            subscription, _ = Subscription.objects.get_or_create(tenant=tenant)
+            subscription.stripe_customer_id = stripe_customer_id
+            subscription.stripe_subscription_id = stripe_subscription_id
+            subscription.status = 'active'
+            subscription.plan_tier = 'Professional'
+            subscription.save()
 
     # Handle failed payments or cancellations
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         try:
-            tenant = Tenant.objects.get(stripe_subscription_id=subscription.id)
-            tenant.subscription_status = 'canceled'
-            tenant.save()
-        except Tenant.DoesNotExist:
+            subscription_obj = Subscription.objects.get(stripe_subscription_id=subscription.id)
+            subscription_obj.status = 'canceled'
+            subscription_obj.save()
+        except Subscription.DoesNotExist:
             pass
 
     return HttpResponse(status=200)
@@ -394,13 +411,15 @@ def stripe_webhook(request):
 def create_customer_portal_session(request):
     tenant = request.user.tenant
     
+    subscription = Subscription.objects.filter(tenant=tenant).first()
+    
     # If they haven't bought anything yet, they don't have a portal
-    if not tenant.stripe_customer_id:
+    if not subscription or not subscription.stripe_customer_id:
         return Response({'error': 'No active billing account found.'}, status=400)
 
     try:
         portal_session = stripe.billing_portal.Session.create(
-            customer=tenant.stripe_customer_id,
+            customer=subscription.stripe_customer_id,
             return_url='http://localhost:5173/settings', # Sends them back to your app when they click "Return"
         )
         return Response({'url': portal_session.url})
@@ -412,13 +431,21 @@ def create_customer_portal_session(request):
 def get_subscription_status(request):
     try:
         tenant = request.user.tenant
+        subscription = Subscription.objects.filter(tenant=tenant).first()
+
+        if not subscription:
+             return Response({
+                'plan_tier': 'Free',
+                'subscription_status': 'none',
+                'is_active': False,
+            })
         
         # Determine if they have access to premium features
-        is_active = tenant.subscription_status in ['active', 'trialing']
+        is_active = subscription.status in ['active', 'trialing']
 
         return Response({
-            'plan_tier': tenant.plan_tier,               # e.g., 'Free', 'Professional', 'Enterprise'
-            'subscription_status': tenant.subscription_status, # e.g., 'active', 'canceled', 'past_due'
+            'plan_tier': subscription.plan_tier,               # e.g., 'Free', 'Professional', 'Enterprise'
+            'subscription_status': subscription.status, # e.g., 'active', 'canceled', 'past_due'
             'is_active': is_active,                      # A helpful boolean for your React frontend
         })
     except Exception as e:
