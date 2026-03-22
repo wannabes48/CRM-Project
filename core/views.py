@@ -7,18 +7,18 @@ from rest_framework.response import Response
 
 from django.db.models import Sum, Count, Q, Avg
 from django.db.models.functions import TruncMonth
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
 from .emails import send_welcome_email
 
-from .models import Tenant, CustomUser, Contact, Deal, Ticket, Subscription, LoginActivity, Notification
+from .models import Tenant, CustomUser, Contact, Deal, Ticket, Subscription, LoginActivity, Notification, Invitation
 from .serializers import (
     ContactSerializer, DealSerializer, TicketSerializer, 
     EventSerializer, TicketNoteSerializer, LoginActivitySerializer,
-    NotificationSerializer
+    NotificationSerializer, MemberSerializer, InvitationSerializer
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -27,7 +27,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics
 from django.contrib.auth import update_session_auth_hash, get_user_model
 from .serializers import UserProfileSerializer, TenantSettingsSerializer
-from .permissions import HasActiveSubscription
+from .permissions import HasActiveSubscription, IsAdmin, IsManagerOrAbove
 
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY')
 User = get_user_model()
@@ -58,7 +58,7 @@ class DealViewSet(viewsets.ModelViewSet):
         user = self.request.user
         qs = Deal.objects.filter(tenant=user.tenant)
         # RBAC: Sales Reps only see their own deals
-        if user.role == 'Sales Rep':
+        if user.role == 'SALES':
             qs = qs.filter(assigned_to=user)
         return qs.order_by('-created_at')
 
@@ -73,7 +73,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         user = self.request.user
         qs = Ticket.objects.filter(tenant=user.tenant)
         # RBAC: Sales Reps only see their own tickets
-        if user.role == 'Sales Rep':
+        if user.role == 'SALES':
             qs = qs.filter(assigned_to=user)
         return qs.order_by('-created_at')
 
@@ -103,11 +103,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username'] = user.username
         token['email'] = user.email
 
-        # THE FIX: Extract the string value from the ForeignKey objects!
-        if hasattr(user, 'role') and user.role:
-            token['role'] = user.role.name
-        else:
-            token['role'] = 'No Role'
+        # Use the role string directly
+        token['role'] = user.role or 'No Role'
         
         # Add the tenant details for frontend use
         if hasattr(user, 'tenant') and user.tenant:
@@ -173,7 +170,8 @@ def register_tenant(request):
             password=data['password'],
             first_name=data.get('first_name', ''),
             last_name=data.get('last_name', ''),
-            tenant=tenant 
+            tenant=tenant,
+            role='ADMIN'
         )
 
         # 3. Initialize their Subscription state
@@ -544,3 +542,96 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_as_read(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'notifications marked as read'})
+
+class TeamViewSet(viewsets.ModelViewSet):
+    serializer_class = MemberSerializer
+    permission_classes = [IsAuthenticated, IsManagerOrAbove]
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(tenant=self.request.user.tenant).order_by('role', 'username')
+
+    def perform_destroy(self, instance):
+        # Prevent self-deletion
+        if instance == self.request.user:
+            raise serializers.ValidationError("You cannot remove yourself from the workspace.")
+        
+        # Admin check
+        if instance.role == 'ADMIN':
+            # Ensure at least one Admin remains
+            if CustomUser.objects.filter(tenant=self.request.user.tenant, role='ADMIN').count() <= 1:
+                raise serializers.ValidationError("At least one Admin must remain in the workspace.")
+            
+            # Managers cannot delete Admins
+            if self.request.user.role == 'MANAGER':
+                raise serializers.ValidationError("Managers cannot remove Admins.")
+        
+        # Soft delete: set status to SUSPENDED instead of actual deletion
+        instance.status = 'SUSPENDED'
+        instance.is_active = False 
+        instance.save()
+
+    @action(detail=True, methods=['patch'])
+    def update_role(self, request, pk=None):
+        member = self.get_object()
+        new_role = request.data.get('role')
+
+        if new_role not in [r[0] for r in CustomUser.ROLE_CHOICES]:
+            return Response({'error': 'Invalid role.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Managers cannot promote to Admin or demote Admins
+        if self.request.user.role == 'MANAGER':
+            if new_role == 'ADMIN' or member.role == 'ADMIN':
+                return Response({'error': 'Managers cannot manage Admin roles.'}, status=status.HTTP_403_FORBIDDEN)
+
+        member.role = new_role
+        member.save()
+        return Response({'status': 'role updated'})
+
+class InvitationViewSet(viewsets.ModelViewSet):
+    serializer_class = InvitationSerializer
+    permission_classes = [IsAuthenticated, IsManagerOrAbove]
+
+    def get_queryset(self):
+        return Invitation.objects.filter(tenant=self.request.user.tenant, accepted=False)
+
+    def perform_create(self, serializer):
+        # Managers cannot invite Admins
+        if self.request.user.role == 'MANAGER' and serializer.validated_data.get('role') == 'ADMIN':
+            raise serializers.ValidationError("Managers cannot invite Admins.")
+        
+        invitation = serializer.save(tenant=self.request.user.tenant)
+        
+        # Simulation: print token to terminal
+        print(f"📧 INVITE SENT: To {invitation.email} with token {invitation.token}")
+
+    @action(detail=True, methods=['post'])
+    def resend(self, request, pk=None):
+        invitation = self.get_object()
+        # Logic to resend email would go here
+        return Response({'status': 'invitation resent'})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def accept_invitation(request):
+    token = request.data.get('token')
+    password = request.data.get('password')
+    username = request.data.get('username')
+
+    try:
+        invitation = Invitation.objects.get(token=token, accepted=False)
+    except (Invitation.DoesNotExist, ValueError):
+        return Response({'error': 'Invalid or expired invitation token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    with transaction.atomic():
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=invitation.email,
+            password=password,
+            tenant=invitation.tenant,
+            role=invitation.role,
+            status='ACTIVE'
+        )
+        invitation.accepted = True
+        invitation.save()
+
+    return Response({'message': 'Invitation accepted. You can now login.'}, status=status.HTTP_201_CREATED)

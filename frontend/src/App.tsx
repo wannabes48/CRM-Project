@@ -14,7 +14,6 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PricingPage from './pages/PricingPage';
-import BlogTemplate from './pages/BlogTemplate';
 import ContentPage from './pages/ContentPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -24,6 +23,8 @@ import SuccessPage from './pages/SuccessPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ContactDetailPage from './pages/ContactDetailPage';
 import { NotificationProvider } from './contexts/NotificationContext';
+import BlogPage from './pages/BlogPage';
+import CareersPage from './pages/CareersPage';
 
 export default function App() {
   return (
@@ -36,7 +37,6 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/blog/sales-automation" element={<BlogTemplate />} />
             <Route path="/privacy" element={<ContentPage />} />
             <Route path="/terms" element={<ContentPage />} />
             <Route path="/cookie-policy" element={<ContentPage />} />
@@ -46,6 +46,8 @@ export default function App() {
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/blog" element={<BlogPage />} />
 
             {/* Protected CRM Routes */}
             <Route element={<ProtectedRoute />}>

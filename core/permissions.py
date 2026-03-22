@@ -20,7 +20,7 @@ class IsAdmin(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role == 'Admin'
+            and request.user.role == 'ADMIN'
         )
 
 
@@ -31,7 +31,7 @@ class IsManagerOrAbove(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role in ('Admin', 'Manager')
+            and request.user.role in ('ADMIN', 'MANAGER')
         )
 
 
@@ -42,7 +42,7 @@ class IsSalesRep(BasePermission):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role == 'Sales Rep'
+            and request.user.role == 'SALES'
         )
 
 class HasActiveSubscription(BasePermission):

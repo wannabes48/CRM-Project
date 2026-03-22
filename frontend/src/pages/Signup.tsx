@@ -19,7 +19,7 @@ export const Signup: React.FC = () => {
       title="Start Building." 
       subtitle="Initialize your workspace and start managing your customer relationships today."
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-6">
         <AuthInput
           label="Company / Workspace Name"
           type="text"
@@ -50,14 +50,16 @@ export const Signup: React.FC = () => {
         <AuthButton type="submit">Initialize Workspace</AuthButton>
       </form>
 
-      <div className="mt-8 text-center">
-        <span className="text-sm font-bold uppercase tracking-wide text-gray-500">
-          Already registered?{' '}
-        </span>
-        <Link to="/login" className="text-sm font-bold uppercase tracking-wide hover:underline text-black border-b-2 border-black pb-1">
-          Log In Here
+      <div className="mt-10 text-center">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-4">
+          Already part of a team?
+        </p>
+        <Link to="/login" className="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:text-saas-neon underline underline-offset-8 decoration-gray-100 dark:decoration-gray-800 hover:decoration-saas-neon transition-all">
+          Authorize Login
         </Link>
       </div>
     </AuthLayout>
   );
 };
+
+export default Signup;

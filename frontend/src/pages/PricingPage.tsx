@@ -74,37 +74,39 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-emerald-200 pb-24">
+    <div className="min-h-screen bg-saas-bg font-sans selection:bg-saas-neon/30 text-gray-900 dark:text-gray-100 pb-24">
       
       {/* Navbar Minimal */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
         <Link to="/" className="flex items-center gap-2">
-          <div className="bg-[#064E3B] text-white p-1.5 rounded-lg"><LayoutDashboard size={24} fill="currentColor" /></div>
-          <span className="text-xl font-black tracking-tight text-gray-900">Xentrix</span>
+          <div className="bg-saas-neon text-white dark:text-black p-1.5 rounded-lg shadow-lg shadow-saas-neon/20">
+            <LayoutDashboard size={24} fill="currentColor" />
+          </div>
+          <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Xentrix</span>
         </Link>
-        <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
+        <Link to="/" className="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-saas-neon transition-colors flex items-center gap-2">
           Back to Home <ArrowLeft size={16} />
         </Link>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">Simple, transparent pricing</h1>
-          <p className="text-lg text-gray-500 mb-8">Choose the perfect plan for your business. No hidden fees.</p>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight mb-4 lowercase">Simple, transparent pricing<span className="text-saas-neon">.</span></h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Choose the perfect plan for your business. No hidden fees.</p>
           
           {/* Billing Toggle */}
-          <div className="inline-flex items-center p-1 bg-gray-200/50 border border-gray-200 rounded-xl relative">
+          <div className="inline-flex items-center p-1 bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-2xl relative shadow-sm">
             <button 
               onClick={() => setAnnual(false)}
-              className={`relative z-10 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 ${!annual ? 'text-gray-900 shadow-sm bg-white' : 'text-gray-500 hover:text-gray-900'}`}
+              className={`relative z-10 px-8 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${!annual ? 'text-gray-900 dark:text-white shadow-xl bg-white dark:bg-saas-bg' : 'text-gray-500 hover:text-saas-neon'}`}
             >
               Monthly billing
             </button>
             <button 
               onClick={() => setAnnual(true)}
-              className={`relative z-10 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 ${annual ? 'text-gray-900 shadow-sm bg-white' : 'text-gray-500 hover:text-gray-900'}`}
+              className={`relative z-10 px-8 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${annual ? 'text-gray-900 dark:text-white shadow-xl bg-white dark:bg-saas-bg' : 'text-gray-500 hover:text-saas-neon'}`}
             >
-              Annual billing <span className="ml-1 text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Save 20%</span>
+              Annual billing <span className="ml-2 text-saas-neon bg-saas-neon/10 px-2 py-0.5 rounded text-[10px] uppercase tracking-widest font-black ring-1 ring-saas-neon/30">Save 20%</span>
             </button>
           </div>
         </div>
@@ -112,45 +114,45 @@ export default function PricingPage() {
         {/* Pricing Cards Grid */}
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-start">
           {plans.map((plan, i) => (
-            <div key={i} className={`relative bg-white rounded-3xl p-8 border ${plan.popular ? 'border-[#064E3B] shadow-2xl scale-105 z-10' : 'border-gray-200 shadow-sm'}`}>
+            <div key={i} className={`relative bg-saas-surface rounded-[2.5rem] p-8 md:p-10 border transition-all duration-500 hover:shadow-2xl ${plan.popular ? 'border-saas-neon shadow-2xl scale-105 z-10 bg-white dark:bg-saas-bg' : 'border-gray-100 dark:border-gray-800 shadow-sm hover:border-saas-neon/50'}`}>
               {plan.popular && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#064E3B] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-saas-neon text-white dark:text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
                   Most Popular
                 </div>
               )}
               
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`p-2 rounded-xl ${plan.popular ? 'bg-emerald-50' : 'bg-gray-50'}`}>{plan.icon}</div>
-                <h3 className="text-xl font-black text-gray-900">{plan.name}</h3>
+              <div className="flex items-center gap-4 mb-8">
+                <div className={`p-3 rounded-2xl ${plan.popular ? 'bg-saas-neon/10 text-saas-neon' : 'bg-saas-bg text-gray-400'}`}>{plan.icon}</div>
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white">{plan.name}</h3>
               </div>
-              <p className="text-sm text-gray-500 mb-6 h-10">{plan.desc}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 h-10 leading-relaxed font-medium">{plan.desc}</p>
               
-              <div className="mb-8">
-                <span className="text-4xl font-black text-gray-900">${annual ? plan.annual : plan.monthly}</span>
-                <span className="text-gray-500 font-medium">/mo</span>
-                {annual && plan.monthly > 0 && <p className="text-xs text-emerald-600 font-bold mt-1">Billed ${plan.annual * 12} yearly</p>}
+              <div className="mb-10">
+                <span className="text-5xl font-black text-gray-900 dark:text-white tracking-tighter">${annual ? plan.annual : plan.monthly}</span>
+                <span className="text-gray-400 font-bold ml-1">/month</span>
+                {annual && plan.monthly > 0 && <p className="text-xs text-saas-neon font-black mt-2 uppercase tracking-widest">Billed ${plan.annual * 12} yearly</p>}
               </div>
 
               <button 
-                onClick={() => handleCheckout(plan.name)} // 3. Attach the function here
+                onClick={() => handleCheckout(plan.name)}
                 disabled={loadingPlan === plan.name}
-                className={`w-full block text-center font-bold py-3 rounded-xl transition-all mb-8 ${plan.popular ? 'bg-[#064E3B] hover:bg-[#043d2e] text-white shadow-lg' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200'}`}
+                className={`w-full block text-center font-black py-4 rounded-2xl transition-all mb-10 text-sm tracking-wide ${plan.popular ? 'bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black shadow-xl shadow-saas-neon/20' : 'bg-saas-bg hover:bg-saas-surface text-gray-900 dark:text-white border border-gray-100 dark:border-gray-800'}`}
                 >
                 {loadingPlan === plan.name ? 'Connecting...' : plan.btnText}
               </button>
 
               <div className="space-y-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-900 mb-4">What's included</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6">What's included</p>
                 {plan.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                    <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                  <div key={idx} className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    <CheckCircle2 size={18} className="text-saas-neon shrink-0" />
                     <span>{feat}</span>
                   </div>
                 ))}
                 {plan.missing.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-3 text-sm text-gray-400">
-                    <X size={18} className="text-gray-300 shrink-0" />
-                    <span>{feat}</span>
+                  <div key={idx} className="flex items-start gap-3 text-sm text-gray-400 dark:text-gray-600 font-medium">
+                    <X size={18} className="text-gray-200 dark:text-gray-800 shrink-0" />
+                    <span className="line-through decoration-1 opacity-50">{feat}</span>
                   </div>
                 ))}
               </div>

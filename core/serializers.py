@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant, LoginActivity, Notification
+from .models import Contact, Activity, Deal, Ticket, TicketNote, CustomUser, Event, Tenant, LoginActivity, Notification, Invitation
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -107,8 +107,23 @@ class EventSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'role']
-        read_only_fields = ['email', 'role'] # Users can't change their own role or email here
+        fields = ['first_name', 'last_name', 'email', 'role', 'status']
+        read_only_fields = ['email', 'role', 'status'] # Users can't change their own role/status/email
+
+class MemberSerializer(serializers.ModelSerializer):
+    """Full detail for the team management table."""
+    last_active = serializers.DateTimeField(source='last_login', read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'first_name', 'last_name', 'email', 'role', 'status', 'last_active']
+        read_only_fields = ['id', 'email', 'last_active']
+
+class InvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invitation
+        fields = ['id', 'email', 'role', 'token', 'accepted', 'created_at']
+        read_only_fields = ['id', 'token', 'accepted', 'created_at']
 
 class TenantSettingsSerializer(serializers.ModelSerializer):
     class Meta:

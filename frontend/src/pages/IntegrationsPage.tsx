@@ -66,15 +66,17 @@ export default function IntegrationsPage() {
 
   return (
     // 1. Flex layout to lock the footer to the bottom
-    <div className="flex flex-col min-h-screen bg-[#FAFAFA] font-sans selection:bg-emerald-200">
+    <div className="flex flex-col min-h-screen bg-saas-bg font-sans selection:bg-saas-neon/30 text-gray-900 dark:text-gray-100">
       
       {/* Navbar Minimal */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10 w-full shrink-0">
         <Link to="/" className="flex items-center gap-2">
-          <div className="bg-[#064E3B] text-white p-1.5 rounded-lg"><LayoutDashboard size={24} fill="currentColor" /></div>
-          <span className="text-xl font-black tracking-tight text-gray-900">Xentrix</span>
+          <div className="bg-saas-neon text-white dark:text-black p-1.5 rounded-lg shadow-lg shadow-saas-neon/20">
+            <LayoutDashboard size={24} fill="currentColor" />
+          </div>
+          <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Xentrix</span>
         </Link>
-        <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
+        <Link to="/" className="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-saas-neon transition-colors flex items-center gap-2">
           Back to Home <ArrowRight size={16} />
         </Link>
       </nav>
@@ -85,10 +87,10 @@ export default function IntegrationsPage() {
         {/* Header Section */}
         <section className="pt-16 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
           <FadeIn>
-            <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight mb-6">
               Connect your favorite tools.
             </h1>
-            <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
               Supercharge your workflow by connecting Xentrix to the apps your team already uses every day. No coding required.
             </p>
 
@@ -100,7 +102,7 @@ export default function IntegrationsPage() {
                 placeholder="Search integrations..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-2xl py-3.5 pl-12 pr-4 text-gray-900 outline-none focus:border-[#064E3B] focus:ring-4 focus:ring-emerald-50 transition-all shadow-sm"
+                className="w-full bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-2xl py-3.5 pl-12 pr-4 text-gray-900 dark:text-white outline-none focus:border-saas-neon transition-all shadow-sm"
               />
             </div>
           </FadeIn>
@@ -112,10 +114,10 @@ export default function IntegrationsPage() {
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${
                     activeCategory === category 
-                      ? 'bg-[#064E3B] text-white shadow-md' 
-                      : 'bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-50 border border-gray-200'
+                      ? 'bg-saas-neon text-white dark:text-black shadow-lg shadow-saas-neon/20' 
+                      : 'bg-saas-surface text-gray-500 dark:text-gray-400 hover:text-saas-neon hover:bg-saas-bg border border-gray-200 dark:border-gray-800'
                   }`}
                 >
                   {category}
@@ -131,20 +133,20 @@ export default function IntegrationsPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredIntegrations.map((app, idx) => (
                 <FadeIn key={app.id} delay={idx * 50}>
-                  <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group h-full flex flex-col cursor-pointer">
+                  <div className="bg-saas-surface p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-2xl hover:-translate-y-1 hover:border-saas-neon transition-all duration-300 group h-full flex flex-col cursor-pointer">
                     <div className="flex justify-between items-start mb-6">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${app.color}`}>
                         {app.icon}
                       </div>
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                      <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest bg-saas-bg px-3 py-1.5 rounded-full border border-gray-100 dark:border-gray-800">
                         {app.category}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{app.name}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed flex-1 mb-6">
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">{app.name}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed flex-1 mb-6">
                       {app.desc}
                     </p>
-                    <div className="flex items-center text-[#064E3B] font-bold text-sm group-hover:text-emerald-500 transition-colors mt-auto">
+                    <div className="flex items-center text-saas-neon font-black text-sm transition-colors mt-auto uppercase tracking-tight">
                       View Integration <ArrowUpRight size={16} className="ml-1" />
                     </div>
                   </div>
@@ -152,15 +154,15 @@ export default function IntegrationsPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 border-dashed">
-              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-20 bg-saas-surface rounded-3xl border border-gray-200 dark:border-gray-800 border-dashed">
+              <div className="w-16 h-16 bg-saas-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Search className="text-gray-400" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No integrations found</h3>
-              <p className="text-gray-500">We couldn't find anything matching "{searchQuery}".</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No integrations found</h3>
+              <p className="text-gray-600 dark:text-gray-400">We couldn't find anything matching "{searchQuery}".</p>
               <button 
                 onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
-                className="mt-6 text-[#064E3B] font-bold hover:underline"
+                className="mt-6 text-saas-neon font-bold hover:underline"
               >
                 Clear filters
               </button>
@@ -171,21 +173,21 @@ export default function IntegrationsPage() {
         {/* Developer API CTA */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
           <FadeIn>
-            <div className="bg-[#09090B] rounded-[2.5rem] p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10 overflow-hidden relative">
-              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-[#064E3B]/20 blur-[100px] rounded-full pointer-events-none" />
+            <div className="bg-saas-surface dark:bg-saas-surface border border-gray-100 dark:border-gray-800 rounded-[2.5rem] p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[150%] bg-saas-neon/5 blur-[100px] rounded-full pointer-events-none" />
               
               <div className="relative z-10 max-w-xl text-center md:text-left">
-                <div className="inline-flex items-center gap-2 bg-white/10 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-white/10">
+                <div className="inline-flex items-center gap-2 bg-saas-neon/10 text-saas-neon px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-saas-neon/20 shadow-sm">
                   <Code size={14} /> For Developers
                 </div>
-                <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">Need a custom workflow?</h2>
-                <p className="text-gray-400 text-lg leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">Need a custom workflow?</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
                   Our robust REST API and webhooks allow you to build custom integrations and connect Xentrix to your proprietary internal tools.
                 </p>
               </div>
 
               <div className="relative z-10 shrink-0">
-                <Link to="/contact" className="bg-white hover:bg-gray-100 text-black font-black py-4 px-8 rounded-xl transition-all shadow-lg flex items-center gap-2">
+                <Link to="/contact" className="bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-saas-neon/20 flex items-center gap-2">
                   Read API Docs <ArrowRight size={18} />
                 </Link>
               </div>

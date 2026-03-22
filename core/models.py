@@ -66,8 +66,19 @@ class CustomUser(AbstractUser, TenantAwareModel):
     """User account, tied to a specific tenant and role."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    # Replaced choice field with Foreign Key to the new Role table
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
+    ROLE_CHOICES = [
+        ("ADMIN", "Admin"),
+        ("MANAGER", "Manager"),
+        ("SALES", "Sales")
+    ]
+    STATUS_CHOICES = [
+        ("ACTIVE", "Active"),
+        ("PENDING", "Pending"),
+        ("SUSPENDED", "Suspended")
+    ]
+    
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="SALES")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
 
     # Avoid clashes with Django's default auth system
     groups = models.ManyToManyField(
@@ -82,8 +93,7 @@ class CustomUser(AbstractUser, TenantAwareModel):
     )
 
     def __str__(self):
-        role_name = self.role.name if self.role else "No Role"
-        return f"{self.username} ({role_name})"
+        return f"{self.username} ({self.role})"
 
 
 # ==========================================
@@ -282,3 +292,14 @@ class Notification(TenantAwareModel):
 
     def __str__(self):
         return f"{self.user.username}: {self.title}"
+
+class Invitation(TenantAwareModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField()
+    role = models.CharField(max_length=20, choices=CustomUser.ROLE_CHOICES)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    accepted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Invite for {self.email} ({self.role})"

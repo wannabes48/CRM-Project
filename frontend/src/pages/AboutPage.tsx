@@ -35,15 +35,17 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-emerald-200">
+    <div className="min-h-screen bg-saas-bg font-sans selection:bg-saas-neon/30 text-gray-900 dark:text-gray-100">
       
       {/* Navbar Minimal */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between relative z-10">
         <Link to="/" className="flex items-center gap-2">
-          <div className="bg-[#064E3B] text-white p-1.5 rounded-lg"><LayoutDashboard size={24} fill="currentColor" /></div>
-          <span className="text-xl font-black tracking-tight text-gray-900">Xentrix</span>
+          <div className="bg-saas-neon text-white dark:text-black p-1.5 rounded-lg shadow-lg shadow-saas-neon/20">
+            <LayoutDashboard size={24} fill="currentColor" />
+          </div>
+          <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Xentrix</span>
         </Link>
-        <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
+        <Link to="/" className="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-saas-neon transition-colors flex items-center gap-2">
           Back to Home <ArrowLeft size={16} />
         </Link>
       </nav>
@@ -53,23 +55,23 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h1 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tight leading-tight mb-6">
+              <h1 className="text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-tight mb-6">
                 We're building the operating system for modern sales.
               </h1>
-              <p className="text-xl text-gray-500 leading-relaxed">
+              <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
                 Founded in 2024, Xentrix started with a simple belief: CRMs should work for your sales team, not the other way around. 
               </p>
             </div>
           </FadeIn>
 
           <FadeIn delay={200}>
-            <div className="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-2xl">
+            <div className="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800">
               <img 
                 src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" 
                 alt="Xentrix Team Collaborating" 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#09090B]/80 to-transparent flex items-end p-8 md:p-12">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-8 md:p-12">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
                   {[
                     { label: 'Founded', val: '2024' },
@@ -90,11 +92,11 @@ export default function AboutPage() {
       </section>
 
       {/* The Mission & Story */}
-      <section className="py-24 bg-white border-y border-gray-100">
+      <section className="py-24 bg-saas-surface border-y border-gray-100 dark:border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 items-center">
           <FadeIn>
-            <h2 className="text-3xl font-black text-gray-900 mb-6">Our Story</h2>
-            <div className="prose prose-lg prose-emerald text-gray-500">
+            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-6">Our Story</h2>
+            <div className="prose prose-lg dark:prose-invert text-gray-600 dark:text-gray-400">
               <p>
                 Before Xentrix, our founders were sales directors frustrated by legacy systems. They were spending more time updating spreadsheets and logging calls than actually speaking with customers.
               </p>
@@ -108,20 +110,20 @@ export default function AboutPage() {
           </FadeIn>
           <FadeIn delay={200}>
             <div className="grid grid-cols-2 gap-4">
-              <img src="https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Office" className="rounded-2xl shadow-sm h-64 object-cover w-full" />
-              <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Meeting" className="rounded-2xl shadow-sm h-64 object-cover w-full mt-8" />
+              <img src="https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Office" className="rounded-2xl shadow-sm h-64 object-cover w-full border border-gray-100 dark:border-gray-800" />
+              <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Meeting" className="rounded-2xl shadow-sm h-64 object-cover w-full mt-8 border border-gray-100 dark:border-gray-800" />
             </div>
           </FadeIn>
         </div>
       </section>
 
       {/* Core Values */}
-      <section className="py-24">
+      <section className="py-24 bg-saas-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-black text-gray-900 mb-4">Our Core Values</h2>
-              <p className="text-gray-500">The principles that guide every feature we build and every hire we make.</p>
+              <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Our Core Values</h2>
+              <p className="text-gray-600 dark:text-gray-400">The principles that guide every feature we build and every hire we make.</p>
             </div>
           </FadeIn>
 
@@ -132,12 +134,12 @@ export default function AboutPage() {
               { icon: <Shield size={24} />, title: 'Uncompromising Trust', desc: 'Your data is your business. We treat security and privacy as absolute, non-negotiable fundamentals.' },
             ].map((value, idx) => (
               <FadeIn key={idx} delay={idx * 100}>
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-full hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-emerald-50 text-[#064E3B] rounded-xl flex items-center justify-center mb-6">
+                <div className="bg-saas-surface p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm h-full hover:shadow-md hover:border-saas-neon/30 transition-all">
+                  <div className="w-12 h-12 bg-saas-neon/10 text-saas-neon rounded-xl flex items-center justify-center mb-6">
                     {value.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{value.desc}</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{value.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{value.desc}</p>
                 </div>
               </FadeIn>
             ))}
@@ -146,12 +148,12 @@ export default function AboutPage() {
       </section>
 
       {/* Leadership Team */}
-      <section className="py-24 bg-white border-t border-gray-100">
+      <section className="py-24 bg-saas-surface border-t border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-black text-gray-900 mb-4">Meet the Leadership</h2>
-              <p className="text-gray-500">The team driving the vision behind Xentrix.</p>
+              <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">Meet the Leadership</h2>
+              <p className="text-gray-600 dark:text-gray-400">The team driving the vision behind Xentrix.</p>
             </div>
           </FadeIn>
 
@@ -164,15 +166,15 @@ export default function AboutPage() {
             ].map((member, idx) => (
               <FadeIn key={idx} delay={idx * 100}>
                 <div className="group text-center">
-                  <div className="relative w-48 h-48 mx-auto mb-4 overflow-hidden rounded-full">
+                  <div className="relative w-48 h-48 mx-auto mb-4 overflow-hidden rounded-full border-2 border-transparent group-hover:border-saas-neon transition-all duration-500">
                     <img 
                       src={member.img} 
                       alt={member.name} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{member.name}</h3>
-                  <p className="text-sm text-[#064E3B] font-medium mt-1">{member.role}</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{member.name}</h3>
+                  <p className="text-sm text-saas-neon font-bold mt-1 uppercase tracking-tight">{member.role}</p>
                 </div>
               </FadeIn>
             ))}
@@ -181,18 +183,18 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-24 bg-saas-bg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeIn>
-            <h2 className="text-4xl font-black text-gray-900 mb-6">Ready to join the revolution?</h2>
-            <p className="text-xl text-gray-500 mb-10">
+            <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">Ready to join the revolution?</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-10">
               Stop fighting your CRM. Start selling.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/register" className="w-full sm:w-auto bg-[#064E3B] hover:bg-[#043d2e] text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg text-lg">
+              <Link to="/register" className="w-full sm:w-auto bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black font-black py-4 px-8 rounded-xl transition-all shadow-lg shadow-saas-neon/20 text-lg">
                 Start your free trial
               </Link>
-              <Link to="/pricing" className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 font-bold py-4 px-8 rounded-xl transition-all shadow-sm text-lg">
+              <Link to="/pricing" className="w-full sm:w-auto bg-saas-surface hover:bg-saas-bg text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 font-bold py-4 px-8 rounded-xl transition-all shadow-sm text-lg">
                 View Pricing
               </Link>
             </div>

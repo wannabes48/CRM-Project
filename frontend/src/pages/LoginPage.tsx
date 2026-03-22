@@ -2,12 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Shield, Users, Briefcase, ArrowRight, ArrowLeft, Loader2, Hexagon } from 'lucide-react';
+import { Mail, Lock, Shield, Users, Briefcase, ArrowRight, ArrowLeft, Loader2, Hexagon, Globe } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [identifier, setIdentifier] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,158 +18,153 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(identifier, password);
-      await new Promise(res => setTimeout(res, 1000));
-
-      console.log(`Logging in as ${username}`);
+      // Brief delay for visual feedback of success
+      await new Promise(res => setTimeout(res, 800));
       navigate('/dashboard', { replace: true });
-
     } catch (err: any) {
-      setError(err.response?.data?.non_field_errors?.[0] || 'Login failed.');
+      setError(err.response?.data?.non_field_errors?.[0] || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4 relative overflow-hidden">
-      <Link to="/" className="absolute top-6 left-6 md:top-10 md:left-10 text-gray-100 hover:text-white flex items-center gap-2 text-sm font-bold transition-colors z-50">
-        <ArrowLeft size={16} /> Back to Home
-      </Link>
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-saas-neon/20 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
-      
-      <div className="w-full max-w-5xl flex flex-col md:flex-row bg-[#151516]/80 backdrop-blur-xl rounded-3xl border border-gray-800 shadow-2xl overflow-hidden relative z-10">
-        {/* Left Side: Login Form */}
-        <div className="flex-1 p-8 md:p-12 flex flex-col justify-center">
-          <Link to="/" className="flex-1 p-8 md:p-12 flex flex-col justify-center">
-          <div className="bg-saas-neon text-black p-2 rounded-lg w-fit">
-            <Hexagon size={24} fill="currentColor" />
-          </div>
-          </Link>
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">SaaS CRM.</h1>
-          <h1 className="text-3xl font-black text-white mb-2">Welcome back</h1>
-          <p className="text-gray-500 mb-10 text-sm uppercase tracking-wide font-semibold">
-            Sign in to your workspace
-          </p>
-          <p className="text-gray-400 text-sm mb-8">Enter your credentials to access your workspace.</p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="p-3 border-2 border-red-500 bg-red-50 text-red-700 text-sm font-semibold">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              Username/Email
-            </label>
-            <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              required
-              className="w-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-saas-surface text-black dark:text-white p-3 text-sm font-semibold focus:outline-none focus:border-saas-neon placeholder:text-gray-400 transition-colors"
-              placeholder="Enter your username/email"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-            <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">
-              Password
-            </label>
-            <Link to="/forgot-password" className="text-xs font-bold text-white underline hover:no-underline">
-              Forgot Password?
-            </Link>
-            </div> 
-            
-            <div className="relative"> 
-              <Lock className="absolute right-4 top-3.5 text-gray-500" size={18} />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-saas-surface text-black dark:text-white p-3 text-sm font-semibold focus:outline-none focus:border-saas-neon placeholder:text-gray-400 transition-colors"
-                placeholder="Enter your password"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-saas-neon hover:bg-[#9EE042] text-black font-black py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(178,255,77,0.2)] flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : (
-                <>Sign In <ArrowRight size={18} /></>
-              )}
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Don't have an account?{' '}
-          <Link to="/register" className="font-bold text-white underline hover:no-underline">
-            Create one
-          </Link>
-        </p>
+    <div className="min-h-screen bg-saas-bg flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-700">
+      <Link to="/" className="absolute top-8 left-8 md:top-12 md:left-12 text-gray-400 hover:text-saas-neon flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all z-50 group">
+        <div className="p-2 rounded-xl bg-white dark:bg-saas-surface border border-gray-100 dark:border-gray-800 group-hover:border-saas-neon/30 group-hover:scale-110 transition-all shadow-sm">
+           <ArrowLeft size={14} strokeWidth={3} />
         </div>
-        {/* Right Side: Quick Test / RBAC Showcase */}
-        <div className="flex-1 bg-gradient-to-br from-[#1E1E20] to-[#09090B] p-8 md:p-12 border-l border-gray-800 flex flex-col justify-center">
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-white mb-2">Role Based Access Control</h2>
-            <p className="text-sm text-gray-400">Access the system with different roles</p>
+        Back to Home
+      </Link>
+      
+      {/* Background Decorative Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-saas-neon/5 dark:bg-saas-neon/10 blur-[150px] rounded-full pointer-events-none animate-pulse duration-[10s]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/5 dark:bg-indigo-500/10 blur-[150px] rounded-full pointer-events-none animate-pulse duration-[8s]" />
+      
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row bg-white/40 dark:bg-saas-surface/40 backdrop-blur-3xl rounded-[3rem] border border-gray-100 dark:border-gray-800 shadow-[0_40px_100px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_100px_rgba(0,0,0,0.6)] overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        
+        {/* Left Side: Login Form */}
+        <div className="flex-[1.2] p-10 md:p-16 flex flex-col justify-center">
+          <div className="mb-12">
+            <div className="bg-saas-neon text-black p-3 rounded-2xl w-fit shadow-xl shadow-saas-neon/30 mb-8 hover:rotate-12 transition-transform duration-500">
+              <Hexagon size={32} fill="currentColor" strokeWidth={0} />
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter text-gray-900 dark:text-white uppercase leading-none mb-4">
+              Welcome<br/><span className="text-saas-neon">Back.</span>
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">
+              Access your workspace and insights
+            </p>
           </div>
 
-          <div className="space-y-4">
-            {/* Admin Demo */}
-            <button 
-              type="button"
-              disabled={true}
-              className="w-full flex items-center p-4 bg-[#151516] border border-gray-800 rounded-xl hover:border-saas-neon group transition-all text-left"
-            >
-              <div className="bg-purple-500/10 p-3 rounded-lg mr-4 group-hover:bg-purple-500/20 transition-colors">
-                <Shield className="text-purple-500" size={20} />
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+            {error && (
+              <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest animate-in slide-in-from-top-2 duration-300">
+                <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                   <Lock size={12} strokeWidth={3} />
+                </div>
+                {error}
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-white group-hover:text-saas-neon transition-colors">Login as Admin</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Full system control, billing, and user management.</p>
-              </div>
-            </button>
+            )}
 
-            {/* Manager Demo */}
-            <button 
-              type="button"
-              disabled={true}
-              className="w-full flex items-center p-4 bg-[#151516] border border-gray-800 rounded-xl hover:border-saas-neon group transition-all text-left"
-            >
-              <div className="bg-blue-500/10 p-3 rounded-lg mr-4 group-hover:bg-blue-500/20 transition-colors">
-                <Users className="text-blue-500" size={20} />
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">
+                Identity Credentials
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-saas-neon transition-colors" size={18} />
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  required
+                  className="w-full bg-white dark:bg-saas-surface border border-gray-100 dark:border-gray-800 rounded-[1.25rem] py-4 pl-12 pr-4 text-xs font-bold outline-none focus:border-saas-neon/30 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white transition-all placeholder:text-gray-400 shadow-sm"
+                  placeholder="Username or active email"
+                />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-white group-hover:text-saas-neon transition-colors">Login as Manager</h3>
-                <p className="text-xs text-gray-500 mt-0.5">View all workspace data, reports, and team pipelines.</p>
-              </div>
-            </button>
+            </div>
 
-            {/* Sales Rep Demo */}
-            <button 
-              type="button"
-              disabled={true}
-              className="w-full flex items-center p-4 bg-[#151516] border border-gray-800 rounded-xl hover:border-saas-neon group transition-all text-left"
+            <div className="space-y-2 group">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+                  Security Key
+                </label>
+                <Link to="/forgot-password" className="text-[10px] font-black text-gray-400 hover:text-saas-neon uppercase tracking-widest transition-colors">
+                  Recovery?
+                </Link>
+              </div> 
+              <div className="relative"> 
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-saas-neon transition-colors" size={18} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full bg-white dark:bg-saas-surface border border-gray-100 dark:border-gray-800 rounded-[1.25rem] py-4 pl-12 pr-4 text-xs font-bold outline-none focus:border-saas-neon/30 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white transition-all placeholder:text-gray-400 shadow-sm"
+                  placeholder="••••••••••••"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-saas-neon hover:scale-[1.02] active:scale-95 text-black font-black py-5 rounded-[1.25rem] transition-all shadow-2xl shadow-saas-neon/20 uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 mt-8 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <div className="bg-saas-neon/10 p-3 rounded-lg mr-4 group-hover:bg-saas-neon/20 transition-colors">
-                <Briefcase className="text-saas-neon" size={20} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white group-hover:text-saas-neon transition-colors">Login as Sales Rep</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Restricted view: Own contacts, deals, and tickets only.</p>
-              </div>
+              {loading ? <Loader2 className="animate-spin" size={20} strokeWidth={3} /> : (
+                  <>Authorize Access <ArrowRight size={18} strokeWidth={3} /></>
+                )}
             </button>
+          </form>
+
+          <p className="mt-12 text-sm font-bold text-gray-500 flex items-center gap-2">
+            No secure portal access?{' '}
+            <Link to="/register" className="text-gray-900 dark:text-white hover:text-saas-neon underline underline-offset-8 decoration-gray-200 dark:decoration-gray-800 hover:decoration-saas-neon transition-all">
+              Register now
+            </Link>
+          </p>
+        </div>
+
+        {/* Right Side: Showcase */}
+        <div className="hidden lg:flex flex-1 bg-gray-50/50 dark:bg-saas-bg/50 p-16 border-l border-gray-100 dark:border-gray-800 flex-col justify-center relative group">
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="w-1.5 h-6 bg-saas-neon rounded-full"></div>
+               <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Unified RBAC.</h2>
+            </div>
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-widest max-w-xs leading-relaxed">
+              Enterprise-grade security with granular access control for every department.
+            </p>
           </div>
-          
+
+          <div className="mt-12 space-y-6 relative z-10">
+            {[
+              { role: 'Admin', desc: 'Full workspace orchestration & billing.', icon: <Shield size={20} />, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+              { role: 'Manager', desc: 'Departmental reports & team pipelines.', icon: <Users size={20} />, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+              { role: 'Sales Rep', desc: 'Dedicated focus on personal portfolio.', icon: <Briefcase size={20} />, color: 'text-saas-neon', bg: 'bg-saas-neon/10' },
+            ].map((demo, idx) => (
+              <div 
+                key={idx}
+                className="p-6 bg-white dark:bg-saas-surface border border-gray-100 dark:border-gray-800 rounded-[2rem] flex items-center gap-5 shadow-sm group/card hover:shadow-2xl hover:shadow-saas-neon/5 hover:border-saas-neon/30 transition-all duration-500"
+              >
+                <div className={`${demo.bg} ${demo.color} p-4 rounded-2xl group-hover/card:scale-110 transition-transform duration-300`}>
+                  {demo.icon}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">{demo.role}</h3>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tight mt-1">{demo.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-16 flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] relative z-10">
+             <Globe size={14} />
+             Global Edge Security Active
+          </div>
+
+          {/* Decorative background element for right side */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-saas-neon/5 rounded-full blur-[120px] pointer-events-none group-hover:bg-saas-neon/10 transition-colors duration-1000" />
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Building, Lock, Bell, Save, Loader2, Shield, Moon, Sun, CreditCard, Users, ExternalLink, ShieldCheck, Monitor, Smartphone, Globe, Rocket} from 'lucide-react';
 import api from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import TeamMembersTab from '../components/settings/TeamMembersTab';
 
 type Tab = 'profile' | 'workspace' | 'security' | 'billing' | 'team' | 'notifications';
 
@@ -196,44 +197,49 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="h-full flex flex-col animate-in fade-in duration-500">
-      <header className="mb-8">
-        <h1 className="text-3xl font-black tracking-tight text-black dark:text-white">Settings</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage your account preferences and workspace details.</p>
+    <div className="h-full flex flex-col animate-in fade-in duration-500 pb-12">
+      <header className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 font-medium">Manage your account preferences and workspace details.</p>
+        </div>
 
         {/* APPEARANCE TOGGLE */}
         <button 
           onClick={toggleTheme}
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm text-black dark:text-white hover:border-saas-neon transition-colors"
+          className="flex items-center gap-3 px-6 py-2.5 bg-saas-surface dark:bg-saas-surface border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm text-gray-900 dark:text-white hover:border-saas-neon transition-all hover:scale-105 active:scale-95 group"
         >
-          {theme === 'dark' ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-blue-500" />}
-          <span className="text-sm font-bold">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          {theme === 'dark' ? <Sun size={18} className="text-saas-neon group-hover:rotate-45 transition-transform" /> : <Moon size={18} className="text-indigo-500 group-hover:-rotate-12 transition-transform" />}
+          <span className="text-[10px] font-black uppercase tracking-widest">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
         </button>
       </header>
 
       {/* Success/Error Toast */}
       {message.text && (
-        <div className={`mb-6 p-4 rounded-xl text-sm font-bold animate-in slide-in-from-top-4 ${message.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-saas-neon/10 text-saas-neon border border-saas-neon/20'}`}>
-          {message.text}
+        <div className={`mb-8 p-5 rounded-2xl text-sm font-black animate-in slide-in-from-top-4 shadow-xl ${message.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-saas-neon/10 text-saas-neon border border-saas-neon/20'}`}>
+          <div className="flex items-center gap-3">
+             <div className={`w-2 h-2 rounded-full animate-pulse ${message.type === 'error' ? 'bg-red-500' : 'bg-saas-neon'}`}></div>
+             {message.text}
+          </div>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-8 flex-1">
+      <div className="flex flex-col lg:flex-row gap-10 flex-1">
         
         {/* Settings Sidebar Navigation */}
-        <aside className="w-full md:w-64 shrink-0">
-          <nav className="flex flex-col space-y-1">
+        <aside className="w-full lg:w-72 shrink-0">
+          <nav className="flex flex-col space-y-2 bg-saas-surface/30 dark:bg-black/10 p-2 rounded-3xl border border-gray-100 dark:border-gray-900/50">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                className={`flex items-center gap-4 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
                   activeTab === tab.id 
-                    ? 'bg-white dark:bg-saas-surface text-saas-neon shadow-sm border border-gray-200 dark:border-gray-800' 
-                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-saas-surface hover:text-black dark:hover:text-white border border-transparent'
+                    ? 'bg-saas-surface text-saas-neon shadow-2xl shadow-black/5 dark:shadow-saas-neon/5 border border-gray-200 dark:border-gray-800 translate-x-1' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-saas-surfacehover hover:text-gray-900 dark:hover:text-white border border-transparent'
                 }`}
               >
-                {tab.icon}
+                <span className={`${activeTab === tab.id ? 'text-saas-neon' : 'text-gray-400 group-hover:text-saas-neon'}`}>{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
@@ -241,60 +247,60 @@ export default function SettingsPage() {
         </aside>
 
         {/* Settings Content Area */}
-        <main className="flex-1 bg-white dark:bg-saas-surface rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <main className="flex-1 bg-saas-surface rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-black/5 dark:ring-white/5 h-fit">
           
           {/* PROFILE TAB */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleSave} className="p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-black dark:text-white">Profile Information</h2>
-                <p className="text-gray-500 text-sm mt-1">Update your personal details and public profile.</p>
+            <form onSubmit={handleSave} className="p-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Profile Information</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Update your personal details and public profile.</p>
               </div>
 
-              <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-100 dark:border-gray-800">
-                <div className="w-20 h-20 rounded-full bg-saas-neon/20 flex items-center justify-center text-2xl font-black text-saas-neon border-2 border-saas-neon">
-                  {profile.first_name.charAt(0)}{profile.last_name.charAt(0)}
+              <div className="flex items-center gap-8 mb-10 pb-10 border-b border-gray-50 dark:border-gray-800">
+                <div className="w-24 h-24 rounded-3xl bg-saas-neon/10 flex items-center justify-center text-3xl font-black text-saas-neon border-2 border-saas-neon/30 shadow-inner">
+                  {profile.first_name?.charAt(0)}{profile.last_name?.charAt(0)}
                 </div>
                 <div>
-                  <button type="button" className="px-4 py-2 bg-gray-100 dark:bg-saas-bg text-black dark:text-white rounded-lg text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                    Upload Avatar
+                  <button type="button" className="px-6 py-3 bg-saas-bg dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shadow-sm">
+                    Upload New Avatar
                   </button>
-                  <p className="text-xs text-gray-500 mt-2">JPG, GIF or PNG. Max size of 2MB.</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-3">JPG, GIF or PNG. Max size 2MB.</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">First Name</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">First Name</label>
                   <input type="text" value={profile.first_name} onChange={e => setProfile({...profile, first_name: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                    className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Last Name</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Last Name</label>
                   <input type="text" value={profile.last_name} onChange={e => setProfile({...profile, last_name: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                    className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
                 </div>
               </div>
 
-              <div className="space-y-2 mb-6">
-                <label className="text-xs font-bold text-gray-400 uppercase">Email Address</label>
+              <div className="space-y-3 mb-8">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Email Address</label>
                 <input type="email" value={profile.email} disabled
-                  className="w-full bg-gray-100 dark:bg-saas-bg/50 border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm text-gray-500 cursor-not-allowed" />
-                <p className="text-xs text-gray-500">To change your login email, please contact support.</p>
+                  className="w-full bg-saas-bg/50 dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm text-gray-400 cursor-not-allowed font-bold" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">To change your login email, please contact support.</p>
               </div>
 
-              <div className="space-y-2 mb-8">
-                <label className="text-xs font-bold text-gray-400 uppercase">System Role</label>
-                <div className="flex items-center gap-2 px-4 py-3 bg-saas-neon/10 border border-saas-neon/20 rounded-xl w-fit">
-                  <Shield size={16} className="text-saas-neon" />
-                  <span className="text-sm font-bold text-saas-neon">{profile.role}</span>
+              <div className="space-y-3 mb-10">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">System Role</label>
+                <div className="flex items-center gap-3 px-5 py-3.5 bg-saas-neon/5 border border-saas-neon/10 rounded-2xl w-fit group">
+                  <Shield size={18} className="text-saas-neon" />
+                  <span className="text-sm font-black text-saas-neon uppercase tracking-widest">{profile.role}</span>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
-                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50">
-                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  Save Changes
+              <div className="flex justify-end pt-10 border-t border-gray-50 dark:border-gray-800">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-3 bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black font-black py-4 px-10 rounded-2xl transition-all shadow-xl shadow-saas-neon/20 disabled:opacity-50 uppercase tracking-[0.2em] text-xs">
+                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  Save Profile
                 </button>
               </div>
             </form>
@@ -303,35 +309,40 @@ export default function SettingsPage() {
 
           {/* WORKSPACE TAB */}
           {activeTab === 'workspace' && (
-            <form onSubmit={handleSave} className="p-8">
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-black dark:text-white">Workspace Settings</h2>
-                <p className="text-gray-500 text-sm mt-1">Manage your company details and tenant domain.</p>
+            <form onSubmit={handleSave} className="p-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Workspace Settings</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Manage your company details and tenant domain.</p>
               </div>
 
-              <div className="space-y-6 mb-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Company Name</label>
+              <div className="space-y-8 mb-10">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Company Name</label>
                   <input type="text" value={workspace.name} onChange={e => setWorkspace({...workspace, name: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                    className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Primary Industry</label>
-                  <select value={workspace.industry} onChange={e => setWorkspace({...workspace, industry: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white appearance-none">
-                    <option>Technology</option>
-                    <option>Real Estate</option>
-                    <option>Finance</option>
-                    <option>Healthcare</option>
-                  </select>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Primary Industry</label>
+                  <div className="relative">
+                    <select value={workspace.industry} onChange={e => setWorkspace({...workspace, industry: e.target.value})}
+                      className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all appearance-none cursor-pointer">
+                      <option>Technology</option>
+                      <option>Real Estate</option>
+                      <option>Finance</option>
+                      <option>Healthcare</option>
+                    </select>
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                       <Globe size={18} />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
-                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50">
-                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  Save Workspace
+              <div className="flex justify-end pt-10 border-t border-gray-50 dark:border-gray-800">
+                <button type="submit" disabled={isSaving} className="flex items-center gap-3 bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black font-black py-4 px-10 rounded-2xl transition-all shadow-xl shadow-saas-neon/20 disabled:opacity-50 uppercase tracking-[0.2em] text-xs">
+                  {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  Update Workspace
                 </button>
               </div>
             </form>
@@ -339,28 +350,29 @@ export default function SettingsPage() {
 
           {/* BILLING TAB */}
           {activeTab === 'billing' && (
-            <div className="p-8">
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-black dark:text-white">Billing & Subscription</h2>
-                <p className="text-gray-500 text-sm mt-1">Manage your payment methods, view invoices, and change your plan.</p>
+            <div className="p-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Billing & Subscription</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Manage your payment methods, view invoices, and change your plan.</p>
               </div>
 
               {/* Current Plan Overview Card */}
-              <div className="bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl">
-                    <CreditCard size={24} />
+              <div className="bg-saas-bg dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-[2rem] p-8 mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-inner ring-1 ring-black/5">
+                <div className="flex items-center gap-6">
+                  <div className="bg-saas-neon/10 dark:bg-saas-neon/5 text-saas-neon p-5 rounded-2xl shadow-sm border border-saas-neon/20">
+                    <CreditCard size={32} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Current Plan</p>
-                    <div className="flex items-center gap-3">
-                      <p className="text-2xl font-black text-black dark:text-white">{subscription.plan_tier}</p>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border ${
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Current Activity</p>
+                    <div className="flex items-center gap-4">
+                      <p className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">{subscription.plan_tier}</p>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full flex items-center gap-2 border ${
                         subscription.is_active 
-                          ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30' 
-                          : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30'
+                          ? 'bg-saas-neon/10 text-saas-neon border-saas-neon/20' 
+                          : 'bg-red-500/10 text-red-500 border-red-500/20'
                       }`}>
-                        <ShieldCheck size={14} /> {subscription.subscription_status}
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${subscription.is_active ? 'bg-saas-neon' : 'bg-red-500'}`}></div>
+                        {subscription.subscription_status}
                       </span>
                     </div>
                   </div>
@@ -368,34 +380,37 @@ export default function SettingsPage() {
               </div>
 
               {/* Portal Action Section */}
-              <div className="space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl">
-                  We use Stripe to securely manage your billing details. Clicking the button below will open a secure window where you can update your credit card, download past invoices, or cancel your subscription.
-                </p>
+              <div className="space-y-8 pt-10 border-t border-gray-50 dark:border-gray-800">
+                <div className="bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100/50 dark:border-indigo-500/10 p-6 rounded-2xl">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium leading-relaxed flex items-start gap-4">
+                    <ShieldCheck className="text-indigo-500 shrink-0 mt-0.5" size={20} />
+                    We use Stripe to securely manage your billing details. Clicking the button below will open a secure window where you can update your credit card, download past invoices, or cancel your subscription.
+                  </p>
+                </div>
 
                 <div className="flex justify-start">
                   {subscription.plan_tier === 'Free' ? (
                     <button 
                       onClick={handleUpgrade}
                       disabled={isRedirecting} 
-                      className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(178,255,77,0.4)] disabled:opacity-50 group"
+                      className="flex items-center justify-center gap-4 bg-saas-neon hover:bg-saas-neonhover text-white dark:text-black font-black py-4 px-10 rounded-2xl transition-all shadow-xl shadow-saas-neon/30 disabled:opacity-50 group uppercase tracking-[0.2em] text-xs"
                     >
                       {isRedirecting ? (
-                        <Loader2 className="animate-spin" size={18} />
+                        <Loader2 className="animate-spin" size={20} />
                       ) : (
-                        <>Upgrade to Professional <Rocket size={18} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></>
+                        <>Upgrade to Professional <Rocket size={20} className="group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" /></>
                       )}
                     </button>
                   ) : (
                     <button 
                       onClick={handleManageBilling}
                       disabled={isRedirecting} 
-                      className="flex items-center justify-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(178,255,77,0.3)] disabled:opacity-50"
+                      className="flex items-center justify-center gap-4 bg-gray-900 dark:bg-saas-bg hover:bg-black dark:hover:bg-black text-white font-black py-4 px-10 rounded-2xl transition-all shadow-xl disabled:opacity-50 uppercase tracking-[0.2em] text-xs border border-white/5"
                     >
                       {isRedirecting ? (
-                        <Loader2 className="animate-spin" size={18} />
+                        <Loader2 className="animate-spin" size={20} />
                       ) : (
-                        <>Open Billing Portal <ExternalLink size={18} /></>
+                        <>Open Billing Portal <ExternalLink size={20} /></>
                       )}
                     </button>
                   )}
@@ -406,133 +421,143 @@ export default function SettingsPage() {
 
           {/* TEAM TAB */}
           {activeTab === 'team' && (
-            <div className="p-8">
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-black dark:text-white">Team Management</h2>
-                <p className="text-gray-500 text-sm mt-1">Manage your team members and their roles.</p>
-              </div>
-              {/* Placeholder for Team Management UI */}
-              <div className="bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-                <p className="text-gray-500 dark:text-gray-400">Team management features will be available in a future update.</p>
-              </div>
-            </div>  
+            <TeamMembersTab />
           )}
 
           {/* SECURITY TAB */}
           {activeTab === 'security' && (
-            <>
-              <div className="bg-white dark:bg-[#151516] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm mb-8">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3 bg-gray-50 dark:bg-gray-800/20">
-                <Shield className="text-emerald-600" size={20} />
-                <h3 className="font-bold text-gray-900 dark:text-white">Recent Logins</h3>
+            <div className="p-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Security & Privacy</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Monitor your session activity and keep your account secure.</p>
               </div>
-              {loading ? (
-                <div className="p-12 flex justify-center">
-                  <Loader2 className="animate-spin text-gray-400" size={32} />
+
+              <div className="bg-saas-bg dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-[2rem] overflow-hidden shadow-inner mb-12 ring-1 ring-black/5">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 bg-gray-50/50 dark:bg-gray-800/20">
+                  <div className="p-2 bg-saas-neon/10 rounded-lg text-saas-neon shadow-sm">
+                    <Shield size={20} strokeWidth={2.5}/>
+                  </div>
+                  <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-widest text-xs">Recent Login Activity</h3>
                 </div>
-              ) : logs.length === 0 ? (
-                <div className="p-12 text-center text-gray-500">No login history found.</div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {logs.map((log) => {
-                    const { label, Icon } = parseDevice(log.user_agent);
-                    return (
-                      <div key={log.id} className="p-4 flex items-center justify-between p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/10 transition-colors">
-                        <div className="flex items-start gap-4">
-                          <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl text-gray-600 dark:text-gray-400 mt-1 sm:mt-0">
-                            <Icon size={20} />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900 dark:text-white mb-1">
-                              {label}
-                              {log.status === 'Success' ? (
-                                <span className="ml-3 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 px-2 py-0.5 rounded-full">Success</span>
-                              ) : (
-                                <span className="ml-3 text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 px-2 py-0.5 rounded-full">Failed</span>
-                              )}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>IP: {log.ip_address || 'Unknown'}</span>
-                              <span className="hidden sm:inline">•</span>
-                              <span>{new Date(log.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                {loading ? (
+                  <div className="p-16 flex justify-center">
+                    <Loader2 className="animate-spin text-saas-neon" size={40} />
+                  </div>
+                ) : logs.length === 0 ? (
+                  <div className="p-16 text-center text-gray-500 font-medium">No login history found.</div>
+                ) : (
+                  <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+                    {logs.map((log) => {
+                      const { label, Icon } = parseDevice(log.user_agent);
+                      return (
+                        <div key={log.id} className="p-6 hover:bg-saas-bg/50 dark:hover:bg-gray-800/10 transition-colors group">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                            <div className="flex items-start gap-4">
+                              <div className="bg-saas-surface dark:bg-gray-800 p-4 rounded-2xl text-gray-500 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-700 group-hover:scale-110 transition-transform">
+                                <Icon size={24} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center flex-wrap gap-3 mb-1.5">
+                                  <p className="font-black text-gray-900 dark:text-white tracking-tight">
+                                    {label}
+                                  </p>
+                                  {log.status === 'Success' ? (
+                                    <span className="text-[9px] font-black uppercase tracking-[0.15em] bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200/50 dark:border-emerald-500/20">Authorized</span>
+                                  ) : (
+                                    <span className="text-[9px] font-black uppercase tracking-[0.15em] bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 px-3 py-1 rounded-full border border-red-200/50 dark:border-red-500/20">Failed Attempt</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                                  <span className="flex items-center gap-1.5"><Globe size={12} className="text-gray-300" /> {log.ip_address || 'Unknown'}</span>
+                                  <span className="hidden sm:inline opacity-30">•</span>
+                                  <span>{new Date(log.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                                </div>
+                              </div>
                             </div>
+                            {log.status === 'Success' && (
+                               <button className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors border border-gray-100 dark:border-gray-800 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/10">Log Out Session</button>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
                 )}
-                </div>
-            <form onSubmit={handlePasswordChange} className="p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-black dark:text-white">Change Password</h2>
-                <p className="text-gray-500 text-sm mt-1">Ensure your account is using a long, random password to stay secure.</p>
               </div>
-              <div className="space-y-4 mb-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Current Password</label>
-                  <input required type="password" value={passwords.old_password} onChange={e => setPasswords({...passwords, old_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+
+              <form onSubmit={handlePasswordChange}>
+                <div className="mb-10">
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Update Password</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Protect your workspace with a secure, highly unique password.</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">New Password</label>
-                  <input required type="password" value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                <div className="space-y-6 mb-10">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Current Password</label>
+                    <input required type="password" value={passwords.old_password} onChange={e => setPasswords({...passwords, old_password: e.target.value})} className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">New Password</label>
+                      <input required type="password" value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Confirm New Password</label>
+                      <input required type="password" value={passwords.confirm_password} onChange={e => setPasswords({...passwords, confirm_password: e.target.value})} className="w-full bg-saas-bg dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-2xl py-3.5 px-5 text-sm outline-none focus:border-saas-neon/50 focus:ring-4 focus:ring-saas-neon/5 text-gray-900 dark:text-white font-bold transition-all" />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Confirm New Password</label>
-                  <input required type="password" value={passwords.confirm_password} onChange={e => setPasswords({...passwords, confirm_password: e.target.value})} className="w-full bg-gray-50 dark:bg-saas-bg border border-gray-200 dark:border-gray-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-saas-neon text-black dark:text-white" />
+                <div className="flex justify-end pt-10 border-t border-gray-50 dark:border-gray-800">
+                  <button type="submit" disabled={isSaving} className="flex items-center gap-3 bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-200 text-white dark:text-black font-black py-4 px-10 rounded-2xl transition-all shadow-xl disabled:opacity-50 uppercase tracking-[0.2em] text-xs">
+                    {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Lock size={20} />} Update Security
+                  </button>
                 </div>
-              </div>
-              <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-800">
-                <button type="submit" disabled={isSaving} className="flex items-center gap-2 bg-saas-neon hover:bg-[#9EE042] text-black font-bold py-2.5 px-6 rounded-xl transition-all disabled:opacity-50">
-                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Shield size={18} />} Update Password
-                </button>
-              </div>
-            </form>
-            </>
+              </form>
+            </div>
           )}
 
           {/* NOTIFICATIONS TAB */}
           {activeTab === 'notifications' && (
-            <div className="p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-black dark:text-white">Notification Preferences</h2>
-                <p className="text-gray-500 text-sm mt-1">Choose how you want to stay updated.</p>
+            <div className="p-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Notification Channels</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 font-medium">Choose how you want to stay updated across your device fleet.</p>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
-                  <div>
-                    <h4 className="font-bold text-black dark:text-white">Email Notifications</h4>
-                    <p className="text-sm text-gray-500">Get important updates delivered to your inbox.</p>
+              <div className="space-y-6">
+                {[
+                  { title: 'Email Alerts', desc: 'Critical system updates and weekly summaries.', active: true },
+                  { title: 'Real-time Dashboards', desc: 'Push notifications inside the application workspace.', active: true },
+                  { title: 'Slack Integration', desc: 'Send alerts directly to your preferred channels.', active: false, comingSoon: true }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-6 bg-saas-bg dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 rounded-3xl hover:border-saas-neon/20 transition-all group">
+                    <div className="flex items-center gap-5">
+                       <div className="w-12 h-12 rounded-2xl bg-saas-surface dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:text-saas-neon transition-colors shadow-sm">
+                          <Bell size={24} />
+                       </div>
+                       <div>
+                          <h4 className="font-black text-lg text-gray-900 dark:text-white tracking-tight leading-none mb-2">{item.title} {item.comingSoon && <span className="ml-2 text-[8px] uppercase tracking-widest text-indigo-500 bg-indigo-500/5 px-2 py-1 rounded-full border border-indigo-500/10">Future</span>}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{item.desc}</p>
+                       </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" checked={item.active} disabled={item.comingSoon} className="sr-only peer" />
+                      <div className="w-14 h-7 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-saas-neon/20 rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-saas-neon shadow-inner"></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-saas-neon/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-saas-neon"></div>
-                  </label>
-                </div>
+                ))}
+              </div>
 
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
-                  <div>
-                    <h4 className="font-bold text-black dark:text-white">In-App Notifications</h4>
-                    <p className="text-sm text-gray-500">Receive alerts while using the dashboard.</p>
+              <div className="mt-12 p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-3xl">
+                  <div className="flex items-start gap-5">
+                    <div className="bg-indigo-500/10 p-4 rounded-2xl text-indigo-500">
+                       <Bell size={24} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black text-gray-900 dark:text-white mb-2">Notification Overload?</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium leading-relaxed">You can silence all non-critical notifications for specific time periods using our upcoming "Quiet Hours" feature.</p>
+                      <button className="mt-6 text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-400 transition-colors">Learn more about notification privacy</button>
+                    </div>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" checked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-saas-neon/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-saas-neon"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-saas-bg border border-gray-100 dark:border-gray-800 rounded-xl">
-                  <div>
-                    <h4 className="font-bold text-black dark:text-white">Mobile Push Notifications</h4>
-                    <p className="text-sm text-gray-500">Get alerts on your phone (Coming Soon).</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" disabled className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
-                  </label>
-                </div>
               </div>
             </div>
           )}

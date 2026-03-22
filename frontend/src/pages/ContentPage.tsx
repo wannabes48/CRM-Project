@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, Hexagon } from 'lucide-react';
 import Footer from '../components/layout/Footer';
 
 export default function ContentPage() {
   const location = useLocation();
   
-  // Scroll to top when navigating between legal pages
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -92,39 +91,60 @@ export default function ContentPage() {
   };
 
   const pageData = contentMap[location.pathname] || {
-    title: 'Page Not Found',
+    title: 'Document Not Found',
     updated: '',
     body: (
-      <>
-        <p>The document you are looking for does not exist or has been moved.</p>
-        <Link to="/" className="text-[#064E3B] font-bold hover:underline">Return to homepage</Link>
-      </>
+      <div className="py-20 text-center">
+        <p className="text-gray-500 font-bold uppercase tracking-widest mb-8">The requested document could not be located on the Xentrix Edge Network.</p>
+        <Link to="/" className="inline-flex items-center gap-2 bg-saas-neon px-6 py-3 rounded-xl text-black font-black uppercase text-[10px] tracking-widest shadow-xl shadow-saas-neon/20 hover:scale-105 active:scale-95 transition-all">
+          <ArrowLeft size={14} strokeWidth={3} /> Standard Protocol Recovery
+        </Link>
+      </div>
     )
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans text-gray-900">
+    <div className="flex flex-col min-h-screen bg-saas-bg transition-colors duration-700">
       
-      {/* Minimal Navbar */}
-      <nav className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-gray-100 w-full shrink-0">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="bg-[#064E3B] text-white p-1 rounded-lg"><LayoutDashboard size={20} /></div>
-          <span className="font-black text-gray-900 tracking-tight">Xentrix</span>
-        </Link>
-        <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2">
-          <ArrowLeft size={16} /> Back
-        </Link>
+      {/* Premium Compact Navbar */}
+      <nav className="w-full h-24 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-saas-bg/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 h-full flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="bg-saas-neon text-black p-2 rounded-xl shadow-xl shadow-saas-neon/20 group-hover:rotate-12 transition-transform duration-500">
+               <Hexagon size={20} fill="currentColor" strokeWidth={0} />
+            </div>
+            <span className="font-black text-gray-900 dark:text-white tracking-tighter uppercase text-xl">Xentrix</span>
+          </Link>
+          <Link to="/" className="text-[10px] font-black text-gray-400 dark:text-gray-500 hover:text-saas-neon transition-all flex items-center gap-3 uppercase tracking-[0.2em] group">
+            <div className="p-2 rounded-xl bg-gray-50 dark:bg-saas-surface border border-transparent group-hover:border-saas-neon/20 group-hover:scale-110 transition-all shadow-sm">
+               <ArrowLeft size={14} strokeWidth={3} />
+            </div>
+            Universal Back
+          </Link>
+        </div>
       </nav>
 
-      {/* Dynamic Content */}
-      <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
-        <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">{pageData.title}</h1>
-        {pageData.updated && (
-          <p className="text-sm text-gray-500 mb-12 font-medium">Last updated: {pageData.updated}</p>
-        )}
+      {/* Structured Legal Content */}
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-20 w-full animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="w-1.5 h-8 bg-saas-neon rounded-full"></div>
+             <h1 className="text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter uppercase leading-none">{pageData.title}.</h1>
+          </div>
+          {pageData.updated && (
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em] ml-5">Protocol Revision: {pageData.updated}</p>
+          )}
+        </div>
         
-        {/* Tailwind Typography 'prose' makes standard HTML look amazing */}
-        <article className="prose prose-emerald prose-lg max-w-none prose-headings:font-black prose-headings:text-gray-900 prose-p:text-gray-600 prose-li:text-gray-600 prose-a:font-bold prose-a:text-[#064E3B]">
+        <article className="prose prose-emerald dark:prose-invert prose-lg max-w-none 
+          prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tighter prose-headings:text-gray-900 dark:prose-headings:text-white
+          prose-p:text-gray-500 dark:prose-p:text-gray-400 prose-p:font-medium prose-p:leading-loose
+          prose-li:text-gray-500 dark:prose-li:text-gray-400 prose-li:font-medium
+          prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-black
+          prose-code:text-saas-neon prose-code:bg-saas-neon/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-lg prose-code:before:content-none prose-code:after:content-none
+          prose-a:text-saas-neon prose-a:no-underline hover:prose-a:underline prose-a:underline-offset-8
+          prose-lead:text-xl prose-lead:font-black prose-lead:text-gray-900 dark:prose-lead:text-white prose-lead:tracking-tight prose-lead:mb-12
+        ">
           {pageData.body}
         </article>
       </main>

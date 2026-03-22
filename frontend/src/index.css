@@ -1,17 +1,33 @@
 @import "tailwindcss";
 
-@theme {
+:root {
+  --color-saas-bg: #FFFFFF;
+  --color-saas-surface: #F9FAFB;
+  --color-saas-surfacehover: #F3F4F6;
+  --color-saas-neon: #064E3B; /* Deep emerald for light mode */
+  --color-saas-neonhover: #043d2e;
+}
+
+.dark {
   --color-saas-bg: #161618;
   --color-saas-surface: #1E1E20;
   --color-saas-surfacehover: #2A2A2D;
-  --color-saas-neon: #B2FF4D;
+  --color-saas-neon: #B2FF4D; /* True neon for dark mode */
   --color-saas-neonhover: #9EE042;
+}
+
+@theme {
+  --color-saas-bg: var(--color-saas-bg);
+  --color-saas-surface: var(--color-saas-surface);
+  --color-saas-surfacehover: var(--color-saas-surfacehover);
+  --color-saas-neon: var(--color-saas-neon);
+  --color-saas-neonhover: var(--color-saas-neonhover);
 }
 
 @layer base {
   body {
     margin: 0;
-    @apply bg-gray-50 text-black dark:bg-saas-bg dark:text-white font-sans antialiased;
+    @apply bg-saas-bg text-gray-900 dark:text-white font-sans antialiased;
   }
   
   #root {
